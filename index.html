@@ -15,8 +15,6 @@
         input, select { width: 100%; padding: 12px; margin: 8px 0; border-radius: 10px; border: 1px solid #ddd; font-family: 'Cairo'; box-sizing: border-box; }
         button { cursor: pointer; padding: 12px; border-radius: 10px; border: none; font-weight: bold; transition: 0.3s; font-family: 'Cairo'; width: 100%; }
         .btn-gold { background: var(--gold); color: white; }
-        .option-box { border: 2px solid #eee; border-radius: 15px; padding: 15px; margin-bottom: 10px; cursor: pointer; }
-        .option-box.selected { border-color: var(--gold); background: #fff9f0; }
         table { width: 100%; border-collapse: collapse; margin-top: 15px; background: white; border-radius: 10px; overflow: hidden; }
         th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: center; font-size: 13px; }
         .btn-wa { background: #25D366; color: white; padding: 8px 12px; border-radius: 8px; font-size: 11px; cursor: pointer; font-weight: bold; border: none; width: auto; }
@@ -28,25 +26,13 @@
 <body>
 
 <div class="container">
-    <div id="landing-page">
-        <div class="card">
-            <h2 style="color:var(--gold)">طلب تصميم دعوة إلكترونية 🌸</h2>
-            <input id="order-name" placeholder="اسمك الكريم">
-            <input id="order-count" type="number" placeholder="عدد الضيوف المتوقع">
-            <div class="option-box" onclick="selectPkg(this, 'بطاقة دعوة', '50')">بطاقة دعوة فقط (50 ريال)</div>
-            <div class="option-box" onclick="selectPkg(this, 'نظام كامل', '150')">واتساب + باركود + خريطة (150 ريال)</div>
-            <button class="btn-gold" id="send-order">إرسال الطلب عبر واتساب 🚀</button>
-            <p style="margin-top:20px; font-size:12px; color:#888; cursor:pointer;" onclick="showLogin()">دخول الإدارة والعملاء</p>
-        </div>
-    </div>
-
-    <div id="login-section" class="hidden">
+    <div id="login-section">
         <div class="card" style="max-width: 400px; margin: auto;">
+            <h2 style="color:var(--gold)">نظام فخامة لإدارة الدعوات</h2>
             <h3>تسجيل الدخول</h3>
             <input id="user-input" placeholder="اسم المستخدم">
             <input id="pass-input" type="password" placeholder="كلمة المرور">
             <button class="btn-gold" id="login-btn">دخول</button>
-            <button onclick="location.reload()" style="background:none; color:#888;">رجوع</button>
         </div>
     </div>
 
@@ -130,7 +116,7 @@
     const db = getFirestore(app);
     const BASE_URL = "https://abdulrhman9591.github.io/wedding-system1/";
 
-    let adminPh = ""; let selPkgValue = ""; let curId = ""; let curCl = "";
+    let adminPh = ""; let curId = ""; let curCl = "";
     const role = sessionStorage.getItem('role');
 
     window.sendToWA = (phone, message) => {
@@ -145,19 +131,6 @@
             if(document.getElementById('set-admin-phone')) document.getElementById('set-admin-phone').value = adminPh; 
         }
     }
-
-    window.selectPkg = (el, name, price) => {
-        document.querySelectorAll('.option-box').forEach(b => b.classList.remove('selected'));
-        el.classList.add('selected'); 
-        selPkgValue = `${name} (${price} ريال)`;
-    };
-
-    document.getElementById('send-order').onclick = () => {
-        const n = document.getElementById('order-name').value;
-        const c = document.getElementById('order-count').value;
-        if(!n || !selPkgValue || !adminPh) return alert("أكمل البيانات");
-        window.sendToWA(adminPh, `طلب جديد:\nالاسم: ${n}\nالعدد: ${c}\nالباقة: ${selPkgValue}`);
-    };
 
     window.openEdit = async (id, cl) => {
         curId = id; curCl = cl;
@@ -221,16 +194,12 @@
     };
 
     window.logout = () => { sessionStorage.clear(); location.reload(); };
-    window.showLogin = () => { 
-        document.getElementById('landing-page').classList.add('hidden'); 
-        document.getElementById('login-section').classList.remove('hidden'); 
-    };
 
     async function init() {
         await loadSet();
         const guestId = new URLSearchParams(window.location.search).get('id');
         if(guestId) {
-            document.getElementById('landing-page').classList.add('hidden');
+            document.getElementById('login-section').classList.add('hidden');
             document.getElementById('guest-section').classList.remove('hidden');
             const g = await getDoc(doc(db, "v30_guests", guestId));
             if(g.exists()){
@@ -253,7 +222,7 @@
                 }
             }
         } else if(sessionStorage.getItem('role')) {
-            document.getElementById('landing-page').classList.add('hidden');
+            document.getElementById('login-section').classList.add('hidden');
             document.getElementById('dashboard-section').classList.remove('hidden');
             const user = sessionStorage.getItem('user');
             document.getElementById('welcome-msg').innerText = "مرحباً: " + user;
