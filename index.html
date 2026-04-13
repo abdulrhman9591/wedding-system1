@@ -6,7 +6,6 @@
     <title>نظام فخامة المتكامل</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
         :root { --pink: #fdf2f2; --gold: #c5a059; --dark-gold: #b38b7d; }
         body { font-family: 'Cairo', sans-serif; background-color: var(--pink); margin: 0; padding: 0; direction: rtl; }
@@ -16,10 +15,14 @@
         input, select { width: 100%; padding: 12px; margin: 8px 0; border-radius: 10px; border: 1px solid #ddd; font-family: 'Cairo'; box-sizing: border-box; }
         button { cursor: pointer; padding: 12px; border-radius: 10px; border: none; font-weight: bold; transition: 0.3s; font-family: 'Cairo'; width: 100%; }
         .btn-gold { background: var(--gold); color: white; }
+        .option-box { border: 2px solid #eee; border-radius: 15px; padding: 15px; margin-bottom: 10px; cursor: pointer; }
+        .option-box.selected { border-color: var(--gold); background: #fff9f0; }
         table { width: 100%; border-collapse: collapse; margin-top: 15px; background: white; border-radius: 10px; overflow: hidden; }
         th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: center; font-size: 13px; }
-        .btn-wa { background: #25D366; color: white; padding: 8px 12px; border-radius: 8px; font-size: 11px; cursor: pointer; border: none; width: auto; }
-        #reader { width: 100%; max-width: 400px; margin: auto; border-radius: 15px; overflow: hidden; }
+        .btn-wa { background: #25D366; color: white; padding: 8px 12px; border-radius: 8px; font-size: 11px; cursor: pointer; font-weight: bold; border: none; width: auto; }
+        .btn-edit { background: #3498db; color: white; padding: 8px 12px; border-radius: 8px; font-size: 11px; width: auto; }
+        .btn-del { background: #ff4d4d; color: white; width: auto; padding: 8px 12px; font-size: 11px; border-radius: 8px; }
+        .btn-scan-link { background: #2c3e50; color: white; margin-top: 10px; }
     </style>
 </head>
 <body>
@@ -30,13 +33,15 @@
             <h2 style="color:var(--gold)">طلب تصميم دعوة إلكترونية 🌸</h2>
             <input id="order-name" placeholder="اسمك الكريم">
             <input id="order-count" type="number" placeholder="عدد الضيوف المتوقع">
+            <div class="option-box" onclick="selectPkg(this, 'بطاقة دعوة', '50')">بطاقة دعوة فقط (50 ريال)</div>
+            <div class="option-box" onclick="selectPkg(this, 'نظام كامل', '150')">واتساب + باركود + خريطة (150 ريال)</div>
             <button class="btn-gold" id="send-order">إرسال الطلب عبر واتساب 🚀</button>
             <p style="margin-top:20px; font-size:12px; color:#888; cursor:pointer;" onclick="showLogin()">دخول الإدارة والعملاء</p>
         </div>
     </div>
 
     <div id="login-section" class="hidden">
-        <div class="card">
+        <div class="card" style="max-width: 400px; margin: auto;">
             <h3>تسجيل الدخول</h3>
             <input id="user-input" placeholder="اسم المستخدم">
             <input id="pass-input" type="password" placeholder="كلمة المرور">
@@ -47,19 +52,27 @@
 
     <div id="dashboard-section" class="hidden">
         <div class="card" style="display:flex; justify-content:space-between; align-items:center;">
-            <h3 id="welcome-msg"></h3>
+            <h3 id="welcome-msg" style="margin:0"></h3>
             <button onclick="window.logout()" style="width:auto; background:#888; color:white; padding:5px 15px;">خروج</button>
         </div>
 
-        <div id="admin-scanner" class="hidden">
-            <div class="card">
-                <h3>🔍 ماسح الباركود (الإسكان)</h3>
-                <div id="reader"></div>
-                <button class="btn-gold" id="start-scan" style="margin-top:10px;">بدء مسح الكود</button>
-            </div>
-        </div>
-
         <div id="admin-area" class="hidden">
+            <div class="card">
+                <h3>⚙️ إعدادات النظام</h3>
+                <input id="set-admin-phone" placeholder="رقم واتساب الاستقبال (966...)">
+                <button class="btn-gold" id="save-settings">حفظ رقم الإدارة</button>
+                <button class="btn-scan-link" onclick="window.open('scan.html', '_blank')">فتح صفحة إسكان الباركود 🔍</button>
+            </div>
+            <div class="card">
+                <h3>🎀 تأسيس حفل</h3>
+                <input id="c-name" placeholder="اسم المستخدم للعميل">
+                <input id="c-pass" placeholder="كلمة المرور">
+                <input id="c-event" placeholder="اسم المناسبة">
+                <input id="c-host" placeholder="اسم الداعي">
+                <input id="c-img" placeholder="رابط صورة الدعوة">
+                <input id="c-map" placeholder="رابط الموقع">
+                <button class="btn-gold" id="save-client">تأسيس الحفل</button>
+            </div>
             <div class="card">
                 <h3>📝 إضافة ضيوف</h3>
                 <select id="client-select"></select>
@@ -75,18 +88,33 @@
         </div>
     </div>
 
+    <div id="edit-modal" class="modal hidden" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000;">
+        <div style="background: white; padding: 30px; border-radius: 20px; width: 90%; max-width: 400px;">
+            <h3>تعديل الضيف</h3>
+            <input id="edit-g-name">
+            <input id="edit-g-phone">
+            <select id="edit-g-status">
+                <option value="انتظار">انتظار</option>
+                <option value="حضور">حضور</option>
+                <option value="اعتذار">اعتذار</option>
+            </select>
+            <button class="btn-gold" id="update-guest-btn">حفظ</button>
+            <button onclick="window.closeEditModal()" style="background:none; color:#888;">إلغاء</button>
+        </div>
+    </div>
+
     <div id="guest-section" class="hidden">
         <div class="card">
             <h1 id="inv-event"></h1>
             <img id="inv-img" style="width:100%; border-radius:15px;">
             <div id="inv-guest" style="font-size:1.5rem; font-weight:bold; margin:15px 0;"></div>
             <div id="guest-actions">
-                <button id="btn-yes" style="background:#8ebf9a; color:white;">تأكيد الحضور ✅</button>
-                <button id="btn-no" style="background:#eee; color:#666; margin-top:10px;">اعتذار ❌</button>
+                <button id="btn-yes" style="background:#8ebf9a; color:white; margin-bottom:10px;">تأكيد الحضور ✅</button>
+                <button id="btn-no" style="background:#eee; color:#666;">اعتذار ❌</button>
             </div>
             <div id="qr-result" class="hidden">
                 <div id="qrcode" style="display:flex; justify-content:center; margin:15px;"></div>
-                <p style="color:#27ae60;">يرجى إبراز الكود عند الدخول ✅</p>
+                <p style="color:#27ae60;">ننتظر تشريفكم ✅</p>
                 <a id="inv-map" target="_blank" style="color:var(--gold);">📍 الموقع</a>
             </div>
         </div>
@@ -95,49 +123,68 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, query, where, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, where, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     const firebaseConfig = { apiKey: "AIzaSyBycODn3kTe7uRIBYifDogSPmv2towU6lA", projectId: "wedding-system-6fadd", appId: "1:902051092170:web:e228d3138a5b091b974633" };
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const BASE_URL = "https://abdulrhman9591.github.io/wedding-system1/";
 
-    let adminPh = ""; const role = sessionStorage.getItem('role');
+    let adminPh = ""; let selPkgValue = ""; let curId = ""; let curCl = "";
+    const role = sessionStorage.getItem('role');
 
-    // وظيفة الإسكان (الماسح)
-    let html5QrCode;
-    window.startScanner = () => {
-        html5QrCode = new Html5Qrcode("reader");
-        html5QrCode.start(
-            { facingMode: "environment" }, 
-            { fps: 10, qrbox: { width: 250, height: 250 } },
-            async (decodedText) => {
-                // عند قراءة الكود (ID الضيف)
-                const gRef = doc(db, "v30_guests", decodedText);
-                const gSnap = await getDoc(gRef);
-                if(gSnap.exists()) {
-                    await updateDoc(gRef, { status: "حضور" });
-                    alert("تم تسجيل دخول: " + gSnap.data().name);
-                    location.reload();
-                }
-            }
-        ).catch(err => alert("خطأ في الكاميرا"));
-    };
-
-    if(document.getElementById('start-scan')) {
-        document.getElementById('start-scan').onclick = () => window.startScanner();
-    }
-
-    // منطق الواتساب
     window.sendToWA = (phone, message) => {
         const url = `https://api.whatsapp.com/send?phone=${phone.replace(/\D/g, '')}&text=${encodeURIComponent(message)}`;
         setTimeout(() => { window.location.assign(url); }, 100);
     };
 
-    // ... تحميل البيانات والجدول ...
+    async function loadSet() {
+        const s = await getDoc(doc(db, "settings", "main"));
+        if(s.exists()) { 
+            adminPh = s.data().phone; 
+            if(document.getElementById('set-admin-phone')) document.getElementById('set-admin-phone').value = adminPh; 
+        }
+    }
+
+    window.selectPkg = (el, name, price) => {
+        document.querySelectorAll('.option-box').forEach(b => b.classList.remove('selected'));
+        el.classList.add('selected'); 
+        selPkgValue = `${name} (${price} ريال)`;
+    };
+
+    document.getElementById('send-order').onclick = () => {
+        const n = document.getElementById('order-name').value;
+        const c = document.getElementById('order-count').value;
+        if(!n || !selPkgValue || !adminPh) return alert("أكمل البيانات");
+        window.sendToWA(adminPh, `طلب جديد:\nالاسم: ${n}\nالعدد: ${c}\nالباقة: ${selPkgValue}`);
+    };
+
+    window.openEdit = async (id, cl) => {
+        curId = id; curCl = cl;
+        const g = await getDoc(doc(db, "v30_guests", id));
+        document.getElementById('edit-g-name').value = g.data().name;
+        document.getElementById('edit-g-phone').value = g.data().phone;
+        document.getElementById('edit-g-status').value = g.data().status;
+        document.getElementById('edit-modal').classList.remove('hidden');
+    };
+
+    window.closeEditModal = () => document.getElementById('edit-modal').classList.add('hidden');
+
+    document.getElementById('update-guest-btn').onclick = async () => {
+        await updateDoc(doc(db, "v30_guests", curId), { 
+            name: document.getElementById('edit-g-name').value, 
+            phone: document.getElementById('edit-g-phone').value, 
+            status: document.getElementById('edit-g-status').value 
+        });
+        closeEditModal(); loadData(curCl);
+    };
+
+    window.delG = async (id, cl) => { if(confirm("حذف؟")) { await deleteDoc(doc(db, "v30_guests", id)); loadData(cl); } };
+
     async function loadData(cl) {
         const cSnap = await getDocs(query(collection(db, "v30_data"), where("name", "==", cl)));
-        let ev = ""; let host = ""; cSnap.forEach(cd => { ev = cd.data().event; host = cd.data().host; });
+        let eventName = ""; let hostName = "";
+        cSnap.forEach(cd => { eventName = cd.data().event; hostName = cd.data().host; });
 
         const snap = await getDocs(query(collection(db, "v30_guests"), where("belongsTo", "==", cl)));
         let h = `<table><tr><th>الاسم</th><th>الحالة</th>`;
@@ -146,31 +193,41 @@
         
         snap.forEach(d => {
             const g = d.data();
-            const msg = `أهلاً بك يا ${g.name} ✨\nنتشرف بدعوتكم لحضور ${ev}..\nللتأكيد:\n${BASE_URL}?id=${d.id}\nالداعي: ${host}`;
+            const msg = `أهلاً بك يا ${g.name} ✨\nنتشرف بدعوتكم لحضور ${eventName}..\nللتأكيد:\n${BASE_URL}?id=${d.id}\nالداعي: ${hostName}`;
             h += `<tr><td>${g.name}</td><td>${g.status}</td>`;
             if(role === 'admin') {
-                h += `<td><button onclick="window.sendToWA('${g.phone}', \`${msg}\`)" class="btn-wa">إرسال</button></td>`;
+                h += `<td>`;
+                h += `<button onclick="window.sendToWA('${g.phone}', \`${msg}\`)" class="btn-wa">إرسال</button> `;
+                h += `<button onclick="openEdit('${d.id}','${cl}')" class="btn-edit">تعديل</button> `;
+                h += `<button onclick="delG('${d.id}','${cl}')" class="btn-del">حذف</button>`;
+                h += `</td>`;
             }
             h += `</tr>`;
         });
         document.getElementById('data-table').innerHTML = h + "</table>";
     }
 
-    // ... باقي وظائف تسجيل الدخول والمبادرة ...
     document.getElementById('login-btn').onclick = async () => {
         const u = document.getElementById('user-input').value;
         const p = document.getElementById('pass-input').value;
-        if(u === "admin" && p === "123456") { sessionStorage.setItem('role','admin'); sessionStorage.setItem('user',u); location.reload(); }
-        else {
+        if(u === "admin" && p === "123456") { 
+            sessionStorage.setItem('role','admin'); sessionStorage.setItem('user',u); location.reload(); 
+        } else {
             const q = query(collection(db, "v30_data"), where("name","==",u), where("password","==",p));
             const snap = await getDocs(q);
             if(!snap.empty) { sessionStorage.setItem('role','client'); sessionStorage.setItem('user',u); location.reload(); }
+            else alert("خطأ في البيانات");
         }
     };
 
     window.logout = () => { sessionStorage.clear(); location.reload(); };
+    window.showLogin = () => { 
+        document.getElementById('landing-page').classList.add('hidden'); 
+        document.getElementById('login-section').classList.remove('hidden'); 
+    };
 
     async function init() {
+        await loadSet();
         const guestId = new URLSearchParams(window.location.search).get('id');
         if(guestId) {
             document.getElementById('landing-page').classList.add('hidden');
@@ -184,13 +241,15 @@
                     document.getElementById('inv-img').src = cd.data().img;
                     document.getElementById('inv-map').href = cd.data().map;
                 });
-                if(g.data().status === "حضور") {
-                    document.getElementById('guest-actions').classList.add('hidden');
-                    document.getElementById('qr-result').classList.remove('hidden');
-                    new QRCode(document.getElementById("qrcode"), { text: guestId, width: 120, height: 120 });
-                } else {
+                if(g.data().status === "انتظار") {
                     document.getElementById('btn-yes').onclick = async () => { await updateDoc(doc(db, "v30_guests", guestId), { status: "حضور" }); location.reload(); };
                     document.getElementById('btn-no').onclick = async () => { await updateDoc(doc(db, "v30_guests", guestId), { status: "اعتذار" }); location.reload(); };
+                } else {
+                    document.getElementById('guest-actions').classList.add('hidden');
+                    if(g.data().status === "حضور") {
+                        document.getElementById('qr-result').classList.remove('hidden');
+                        new QRCode(document.getElementById("qrcode"), { text: guestId, width: 120, height: 120 });
+                    }
                 }
             }
         } else if(sessionStorage.getItem('role')) {
@@ -199,12 +258,27 @@
             const user = sessionStorage.getItem('user');
             document.getElementById('welcome-msg').innerText = "مرحباً: " + user;
             if(role === 'admin') {
-                document.getElementById('admin-scanner').classList.remove('hidden');
                 document.getElementById('admin-area').classList.remove('hidden');
                 const s = await getDocs(collection(db, "v30_data"));
                 const sel = document.getElementById('client-select');
+                sel.innerHTML = "<option value=''>اختر الحفل</option>";
                 s.forEach(d => sel.innerHTML += `<option value="${d.data().name}">${d.data().name}</option>`);
                 sel.onchange = () => loadData(sel.value);
+                document.getElementById('save-settings').onclick = async () => {
+                    await setDoc(doc(db, "settings", "main"), { phone: document.getElementById('set-admin-phone').value });
+                    alert("تم الحفظ");
+                };
+                document.getElementById('save-client').onclick = async () => {
+                    await addDoc(collection(db, "v30_data"), { 
+                        name: document.getElementById('c-name').value, 
+                        password: document.getElementById('c-pass').value, 
+                        event: document.getElementById('c-event').value, 
+                        host: document.getElementById('c-host').value, 
+                        img: document.getElementById('c-img').value, 
+                        map: document.getElementById('c-map').value 
+                    });
+                    location.reload();
+                };
                 document.getElementById('save-guest').onclick = async () => {
                     let p = document.getElementById('g-phone').value; if(p.startsWith('0')) p = '966' + p.substring(1);
                     await addDoc(collection(db, "v30_guests"), { belongsTo: sel.value, name: document.getElementById('g-name').value, phone: p, status: "انتظار" });
