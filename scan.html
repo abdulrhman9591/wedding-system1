@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>بوابة الدخول - مسح الكود</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <style>
+        body { font-family: 'Cairo', sans-serif; background: #fdf2f2; text-align: center; padding: 20px; }
+        .card { background: white; max-width: 500px; margin: auto; padding: 30px; border-radius: 20px; border: 2px solid #e5b3a3; box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
+        #reader { width: 100%; border-radius: 15px; overflow: hidden; background: #fafafa; }
+        .result { margin-top: 20px; padding: 15px; border-radius: 10px; display: none; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2 style="color: #e5b3a3;">بوابة الدخول الملكية 🌸</h2>
+    <p>وجه الكاميرا نحو كود الضيف للتحقق</p>
+    <div id="reader"></div>
+    <div id="scanned-result" class="result"></div>
+    <br>
+    <button onclick="location.href='index.html'" style="background:#888; color:white; border:none; padding:12px 25px; border-radius:10px; cursor:pointer; font-family:'Cairo'">العودة للوحة التحكم</button>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyBycODn3kTe7uRIBYifDogSPmv2towU6lA",
+        authDomain: "wedding-system-6fadd.firebaseapp.com",
+        projectId: "wedding-system-6fadd",
+        storageBucket: "wedding-system-6fadd.firebasestorage.app",
+        messagingSenderId: "902051092170",
+        appId: "1:902051092170:web:e228d3138a5b091b974633"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    async function onScanSuccess(decodedText) {
+        const resDiv = document.getElementById('scanned-result');
+        resDiv.style.display = 'block';
+        resDiv.innerHTML = "جاري التحقق من الضيف...";
+        resDiv.style.background = "#eee";
+
+        try {
+            // ملاحظة: تأكد أن اسم المجموعة v30_guests مطابق لما في الـ Firebase عندك
+            const gRef = doc(db, "v30_guests", decodedText);
+            const gSnap = await getDoc(gRef);
+            
+            if (gSnap.exists()) {
+                await updateDoc(gRef, { status: "تم الدخول ✅", checkInTime: new Date() });
+                resDiv.innerHTML = "أهلاً بك: " + gSnap.data().name + " ✅<br>تم تسجيل الدخول";
+                resDiv.style.background = "#d4edda";
+                resDiv.style.color = "#155724";
+            } else {
+                resDiv.innerHTML = "عذراً، الكود غير صحيح أو غير مسجل ❌";
+                resDiv.style.background = "#f8d7da";
+                resDiv.style.color = "#721c24";
+            }
+        } catch (e) {
+            resDiv.innerHTML = "خطأ في الاتصال بقاعدة البيانات";
+            console.error(e);
+        }
+    }
+
+    const html5QrScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
+    html5QrScanner.render(onScanSuccess);
+</script>
+</body>
+</html>
