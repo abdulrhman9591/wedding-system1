@@ -12,14 +12,15 @@
         .container { width: 95%; max-width: 1200px; margin: auto; padding: 20px; }
         .card { background: white; border-radius: 20px; padding: 20px; margin-bottom: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
         .hidden { display: none !important; }
-        input, select { width: 100%; padding: 12px; margin: 8px 0; border-radius: 10px; border: 1px solid #ddd; }
-        button { cursor: pointer; padding: 12px; border-radius: 10px; border: none; font-weight: bold; width: 100%; transition: 0.3s; }
-        .btn-gold { background: var(--gold); color: white; }
-        .btn-wa { background: #25D366; color: white; text-decoration: none; padding: 5px 10px; border-radius: 5px; font-size: 12px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        input, select { width: 100%; padding: 12px; margin: 8px 0; border-radius: 10px; border: 1px solid #ddd; font-family: 'Cairo'; }
+        button { cursor: pointer; padding: 12px; border-radius: 10px; border: none; font-weight: bold; transition: 0.3s; font-family: 'Cairo'; }
+        .btn-gold { background: var(--gold); color: white; width: 100%; }
+        .btn-scan { background: #3498db; color: white; padding: 8px 20px; width: auto; }
+        .btn-wa { background: #25D366; color: white; text-decoration: none; padding: 5px 10px; border-radius: 5px; font-size: 12px; display: inline-block; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; min-width: 500px; }
         th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: center; }
-        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
-        .stat-box { background: white; padding: 20px; border-radius: 15px; text-align: center; border: 1px solid var(--gold); }
+        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
+        .stat-box { background: white; padding: 20px; border-radius: 15px; text-align: center; border: 2px solid var(--gold); }
     </style>
 </head>
 <body>
@@ -27,66 +28,52 @@
 <div id="app" class="container">
     
     <div id="login-section" class="card" style="max-width: 400px; margin: 50px auto;">
-        <h2 style="text-align:center; color:var(--gold)">دخول النظام</h2>
+        <h2 style="text-align:center; color:var(--gold)">دخول النظام 🌸</h2>
         <input id="user-input" placeholder="اسم المستخدم">
         <input id="pass-input" type="password" placeholder="كلمة المرور">
         <button class="btn-gold" id="login-btn">دخول</button>
     </div>
 
     <div id="dashboard-section" class="hidden">
-        <div class="card" style="display: flex; justify-content: space-between; align-items: center;">
-            <h3 id="welcome-msg">مرحباً</h3>
-            <button onclick="localStorage.clear(); location.reload();" style="width:auto; background:#888; color:white;">خروج</button>
+        <div class="card" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+            <h3 id="welcome-msg" style="margin:0">مرحباً</h3>
+            <div id="top-actions">
+                <button class="btn-scan" id="open-scanner-btn" onclick="window.open('scan.html', '_blank')">📷 فتح الماسح</button>
+                <button onclick="localStorage.clear(); location.reload();" style="background:#888; color:white;">خروج</button>
+            </div>
         </div>
 
         <div id="admin-controls" class="hidden">
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px;">
                 <div class="card">
-                    <h3>🎀 تأسيس حفل</h3>
-                    <input id="c-name" placeholder="اسم العميل (للدخول)">
+                    <h3>🎀 تأسيس حفل جديد</h3>
+                    <input id="c-name" placeholder="اسم العميل (اسم المستخدم)">
+                    <input id="c-pass" type="text" placeholder="تعيين كلمة مرور للعميل">
                     <input id="c-event" placeholder="اسم المناسبة">
-                    <input id="c-img" placeholder="رابط الصورة">
+                    <input id="c-img" placeholder="رابط صورة الكرت">
                     <input id="c-map" placeholder="رابط الخريطة">
                     <button class="btn-gold" id="add-client-btn">حفظ الحفل</button>
                 </div>
                 <div class="card">
-                    <h3>📝 إضافة ضيف</h3>
+                    <h3>📝 إضافة ضيوف</h3>
                     <select id="client-select"></select>
                     <input id="g-name" placeholder="اسم الضيف">
-                    <input id="g-phone" placeholder="الجوال (05xxxx)">
-                    <button style="background:#8ebf9a; color:white;" id="add-guest-btn">إضافة</button>
+                    <input id="g-phone" placeholder="الجوال (966)">
+                    <button style="background:#8ebf9a; color:white; width: 100%;" id="add-guest-btn">إضافة ضيف</button>
                 </div>
             </div>
         </div>
 
         <div id="stats-view" class="stat-grid hidden">
-            <div class="stat-box"><h1 id="count-yes">0</h1><p>تأكيد حضور</p></div>
-            <div class="stat-box"><h1 id="count-no">0</h1><p>اعتذار</p></div>
+            <div class="stat-box"><h1 id="count-yes" style="color:#2ecc71">0</h1><p>تأكيد حضور</p></div>
+            <div class="stat-box"><h1 id="count-no" style="color:#e74c3c">0</h1><p>اعتذار</p></div>
         </div>
 
         <div class="card" id="table-container">
-            <h3 id="table-title">قائمة الضيوف</h3>
+            <h3 id="table-title">جدول البيانات</h3>
             <div id="guest-table-div" style="overflow-x: auto;"></div>
         </div>
     </div>
-
-    <div id="guest-section" class="hidden" style="max-width: 500px; margin: auto;">
-        <div class="card" style="text-align: center; border: 2px solid var(--gold);">
-            <h1 id="inv-event"></h1>
-            <img id="inv-img" style="width:100%; border-radius:15px; margin-bottom:15px;">
-            <h2 id="inv-guest"></h2>
-            <div id="guest-actions">
-                <button id="btn-yes" style="background:#8ebf9a; color:white; margin-bottom:10px;">سأحضر ✅</button>
-                <button id="btn-no" style="background:#f8d7da; color:#721c24;">أعتذر ❌</button>
-            </div>
-            <div id="qr-result" class="hidden">
-                <div id="qrcode" style="display:inline-block; padding:10px;"></div>
-                <p>تم تسجيل ردك مسبقاً بنجاح ✅</p>
-                <p>📍 <a id="inv-map" target="_blank">موقع القاعة</a></p>
-            </div>
-        </div>
-    </div>
-
 </div>
 
 <script type="module">
@@ -106,13 +93,13 @@
     const db = getFirestore(app);
     const BASE_URL = "https://abdulrhman9591.github.io/wedding-system1/";
 
-    // --- وظائف عامة ---
+    // وظيفة تصفير الحالة للأدمن
     window.resetGuest = async (id, cName) => {
         const s = prompt("الحالة الجديدة: (انتظار / حضور / اعتذار)", "انتظار");
         if(s) { await updateDoc(doc(db, "v30_guests", id), { status: s }); loadData(cName); }
     };
 
-    // --- الدخول ---
+    // تسجيل الدخول المطوّر
     document.getElementById('login-btn').onclick = async () => {
         const u = document.getElementById('user-input').value;
         const p = document.getElementById('pass-input').value;
@@ -121,16 +108,16 @@
             localStorage.setItem('role', 'admin'); localStorage.setItem('user', u);
             location.reload();
         } else {
-            const q = query(collection(db, "v30_data"), where("name", "==", u));
+            // البحث عن العميل بكلمة المرور الخاصة به
+            const q = query(collection(db, "v30_data"), where("name", "==", u), where("password", "==", p));
             const snap = await getDocs(q);
             if(!snap.empty) {
                 localStorage.setItem('role', 'client'); localStorage.setItem('user', u);
                 location.reload();
-            } else { alert("بيانات خاطئة"); }
+            } else { alert("اسم المستخدم أو كلمة المرور غير صحيحة"); }
         }
     };
 
-    // --- تحميل البيانات ---
     async function loadData(clientName) {
         const q = query(collection(db, "v30_guests"), where("belongsTo", "==", clientName));
         const snap = await getDocs(q);
@@ -149,7 +136,7 @@
             html += `<tr><td>${g.name}</td><td>${g.status}</td>`;
             if(localStorage.getItem('role') === 'admin') {
                 html += `<td><a href="https://wa.me/${g.phone}?text=${msg}" target="_blank" class="btn-wa">واتساب</a></td>`;
-                html += `<td><button onclick="resetGuest('${d.id}', '${clientName}')" style="background:#eee; padding:5px; font-size:10px;">⚙️</button></td>`;
+                html += `<td><button onclick="resetGuest('${d.id}', '${clientName}')" style="background:#eee; padding:5px; font-size:10px; border-radius:5px;">⚙️</button></td>`;
             }
             html += `</tr>`;
         });
@@ -159,40 +146,13 @@
         document.getElementById('count-no').innerText = no;
     }
 
-    // --- البداية (Initialization) ---
     async function init() {
         const urlParams = new URLSearchParams(window.location.search);
-        const guestId = urlParams.get('id');
-
-        if(guestId) {
-            // واجهة الضيف
-            document.getElementById('login-section').classList.add('hidden');
-            document.getElementById('guest-section').classList.remove('hidden');
-            const gDoc = await getDoc(doc(db, "v30_guests", guestId));
-            if(gDoc.exists()) {
-                const g = gDoc.data();
-                document.getElementById('inv-guest').innerText = "يا " + g.name;
-                const cSnap = await getDocs(query(collection(db, "v30_data"), where("name", "==", g.belongsTo)));
-                cSnap.forEach(cd => {
-                    document.getElementById('inv-event').innerText = cd.data().event;
-                    document.getElementById('inv-img').src = cd.data().img;
-                    document.getElementById('inv-map').href = cd.data().map;
-                });
-
-                if(g.status !== "انتظار") {
-                    document.getElementById('guest-actions').classList.add('hidden');
-                    document.getElementById('qr-result').classList.remove('hidden');
-                    if(g.status !== "اعتذار") new QRCode(document.getElementById("qrcode"), { text: guestId, width: 150, height: 150 });
-                } else {
-                    document.getElementById('btn-yes').onclick = async () => { await updateDoc(doc(db, "v30_guests", guestId), { status: "حضور" }); location.reload(); };
-                    document.getElementById('btn-no').onclick = async () => { await updateDoc(doc(db, "v30_guests", guestId), { status: "اعتذار" }); location.reload(); };
-                }
-            }
-        } else if(localStorage.getItem('role')) {
-            // واجهة الإدارة
+        if(!urlParams.get('id') && localStorage.getItem('role')) {
             document.getElementById('login-section').classList.add('hidden');
             document.getElementById('dashboard-section').classList.remove('hidden');
             document.getElementById('stats-view').classList.remove('hidden');
+            
             const role = localStorage.getItem('role');
             const user = localStorage.getItem('user');
             document.getElementById('welcome-msg').innerText = "مرحباً: " + user;
@@ -201,14 +161,22 @@
                 document.getElementById('admin-controls').classList.remove('hidden');
                 const s = await getDocs(collection(db, "v30_data"));
                 const sel = document.getElementById('client-select');
-                sel.innerHTML = "<option value=''>اختر العميل</option>";
+                sel.innerHTML = "<option value=''>اختر العميل لرؤية بياناته</option>";
                 s.forEach(d => sel.innerHTML += `<option value="${d.data().name}">${d.data().name}</option>`);
                 sel.onchange = () => loadData(sel.value);
                 
                 document.getElementById('add-client-btn').onclick = async () => {
-                   await addDoc(collection(db, "v30_data"), { name: document.getElementById('c-name').value, event: document.getElementById('c-event').value, img: document.getElementById('c-img').value, map: document.getElementById('c-map').value });
+                   await addDoc(collection(db, "v30_data"), { 
+                       name: document.getElementById('c-name').value, 
+                       password: document.getElementById('c-pass').value, // إضافة كلمة المرور
+                       event: document.getElementById('c-event').value, 
+                       img: document.getElementById('c-img').value, 
+                       map: document.getElementById('c-map').value 
+                   });
+                   alert("تم تأسيس الحفل وحفظ كلمة مرور العميل");
                    location.reload();
                 };
+
                 document.getElementById('add-guest-btn').onclick = async () => {
                    let p = document.getElementById('g-phone').value;
                    if(p.startsWith('0')) p = '966' + p.substring(1);
@@ -216,7 +184,8 @@
                    loadData(sel.value);
                 };
             } else {
-                // للعميل فقط
+                // للعميل (إخفاء زر الماسح)
+                document.getElementById('open-scanner-btn').classList.add('hidden');
                 loadData(user);
             }
         }
