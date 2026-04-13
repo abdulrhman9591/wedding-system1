@@ -3,128 +3,326 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>دعوة زفاف 💍</title>
-
-    <!-- OG Tags (مهم للواتساب) -->
-    <meta property="og:title" content="دعوة زفاف 💍">
-    <meta property="og:description" content="اضغط لمشاهدة الدعوة وتأكيد الحضور بكل سهولة">
-    <meta property="og:image" content="https://via.placeholder.com/500x300/fdf2f2/e5b3a3?text=Wedding+Invitation">
-    <meta property="og:type" content="website">
-    <meta property="og:locale" content="ar_AR">
-    <meta name="twitter:card" content="summary_large_image">
-
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&family=Amiri&display=swap" rel="stylesheet">
+    <title>نظام الدعوات الملكي للأعراس</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&family=Amiri:wght@700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-
     <style>
-        :root { --soft-pink: #fdf2f2; --rose-gold: #e5b3a3; --deep-gray: #5a5a5a; --pure-white: #ffffff; }
-        body { font-family: 'Cairo', sans-serif; background-color: var(--soft-pink); color: var(--deep-gray); margin: 0; padding: 0; }
-        .container { width: 95%; max-width: 1200px; margin: auto; padding: 20px; }
+        :root {
+            --soft-pink-bg: #fdf2f2;
+            --pure-white: #ffffff;
+            --rose-gold-text: #e5b3a3;
+            --deep-gray-text: #5a5a5a;
+            --accent-pink-faint: #f8d7da;
+        }
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: var(--soft-pink-bg);
+            color: var(--deep-gray-text);
+            margin: 0;
+            padding: 0;
+            /* خلفية مزخرفة بنقوش ناعمة جداً */
+            background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 56c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-13-8c4.418 0 8-3.582 8-8s-3.582-8-8-8-8 3.582-8 8 3.582 8 8 8zm66 15c.552 0 1-.448 1-1s-.448-1-1-1-1 .448-1 1 .448 1 1 1z' fill='%23e5b3a3' fill-opacity='0.1' fill-rule='evenodd'/%3E%3C/svg%3E");
+        }
+
+        .container { width: 90%; max-width: 1100px; margin: auto; padding: 20px; }
         .hidden { display: none !important; }
-        .card { background: var(--pure-white); border-radius: 20px; padding: 25px; margin-bottom: 20px; box-shadow: 0 5px 20px rgba(0,0,0,0.03); border: 1px solid rgba(229, 179, 163, 0.2); }
-        h1, h2, h3 { color: var(--rose-gold); font-family: 'Amiri', serif; margin-top: 0; }
-        input, select, textarea { width: 100%; padding: 12px; margin: 8px 0; border-radius: 10px; border: 1px solid #eee; background: #fafafa; box-sizing: border-box; font-family: 'Cairo'; }
-        button { cursor: pointer; padding: 12px; border-radius: 10px; border: none; font-weight: bold; transition: 0.3s; }
-        .btn-main { background: var(--rose-gold); color: white; width: 100%; }
-        .btn-wa { background: #58cc71; color: white; padding: 5px 10px; font-size: 13px; }
-        .btn-edit { background: #3498db; color: white; padding: 5px 10px; font-size: 13px; }
-        .btn-danger { background: #f8d7da; color: #721c24; padding: 5px 10px; font-size: 13px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th, td { padding: 12px; text-align: right; border-bottom: 1px solid #f5f5f5; font-size: 14px; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+        /* البطاقة الرئيسية ناعمة وواضحة */
+        .card {
+            background: var(--pure-white);
+            border-radius: 25px;
+            padding: 30px;
+            margin-bottom: 25px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.03);
+            border: 1px solid rgba(229, 179, 163, 0.2);
+            position: relative;
+        }
+
+        h1, h2, h3 { color: var(--rose-gold-text); font-family: 'Amiri', serif; }
+
+        input, select {
+            width: 100%; padding: 15px; margin: 10px 0; border-radius: 12px;
+            border: 1px solid #eee; background: #fafafa; color: var(--deep-gray-text); box-sizing: border-box;
+            font-family: 'Cairo', sans-serif;
+        }
+
+        button {
+            cursor: pointer; padding: 15px 25px; border-radius: 12px; border: none;
+            font-weight: bold; transition: 0.3s; width: 100%; font-size: 16px;
+        }
+
+        .btn-main { background: var(--rose-gold-text); color: white; box-shadow: 0 4px 15px rgba(229, 179, 163, 0.4); }
+        .btn-main:hover { transform: translateY(-2px); opacity: 0.9; }
+
+        .btn-wa { background: #58cc71; color: white; width: auto; padding: 8px 15px; }
+        .btn-danger { background: #f8d7da; color: #721c24; width: auto; padding: 8px 15px; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 18px; text-align: right; border-bottom: 1px solid #f9f9f9; }
+        th { color: var(--rose-gold-text); font-size: 1.1em; }
+
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; }
         @media (max-width: 768px) { .grid { grid-template-columns: 1fr; } }
-        .inv-img { width: 100%; border-radius: 15px; border: 4px solid white; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 100; }
+
+        /* تصميم صفحة كرت الدعوة (الضيف) */
+        .inv-box {
+            max-width: 550px; margin: 50px auto; text-align: center;
+            border: 3px double var(--rose-gold-text);
+            padding: 40px; background: #fff;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.1);
+            position: relative;
+        }
+        
+        /* زخرفة علوية كلاسيكية */
+        .inv-box::before {
+            content: "👑"; font-size: 2em; position: absolute; top: -20px; left: 50%; transform: translateX(-50%);
+            background: var(--soft-pink-bg); padding: 0 10px; color: var(--rose-gold-text);
+        }
+
+        .inv-img { width: 100%; border-radius: 20px; margin-bottom: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); border: 5px solid white; }
+        .qr-box { background: white; padding: 15px; display: inline-block; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
     </style>
 </head>
 <body>
 
 <div id="app" class="container">
     
-    <div id="login-page" class="card" style="max-width: 400px; margin: 80px auto; text-align: center;">
-        <h1>🌸 دخول النظام</h1>
-        <input id="user-input" placeholder="اسم المستخدم">
+    <div id="login-page" class="card" style="max-width: 450px; margin: 80px auto; text-align: center;">
+        <h1 style="font-size: 2.5em;">🌸 مرحباً بك</h1>
+        <p style="color: #999;">يرجى تسجيل الدخول لمتابعة المناسبة</p>
+        <input id="user-input" type="text" placeholder="اسم المستخدم">
         <input id="pass-input" type="password" placeholder="كلمة المرور">
-        <button class="btn-main" onclick="handleLogin()">دخول</button>
+        <button class="btn-main" onclick="handleLogin()">دخول النظام</button>
     </div>
 
     <div id="main-page" class="hidden">
-        <div class="card" style="display: flex; justify-content: space-between; align-items: center;">
-            <h2 style="margin:0">لوحة التحكم</h2>
+        <div style="display: flex; justify-content: space-between; align-items: center; background: white; padding: 15px 30px; border-radius: 20px; margin-bottom: 20px;">
+            <h2 id="view-title" style="margin:0">لوحة التحكم الهادئة</h2>
             <button class="btn-danger" style="width: auto;" onclick="logout()">خروج</button>
         </div>
 
         <div id="admin-view" class="hidden">
             <div class="grid">
                 <div class="card">
-                    <h3>🎀 حفل جديد</h3>
+                    <h3>🎀 تأسيس مناسبة جديدة</h3>
                     <input id="c-name" placeholder="اسم العميل">
-                    <input id="c-event" placeholder="عنوان الحفل">
-                    <input id="c-img-file" type="file" accept="image/*">
-                    <input id="c-map" placeholder="رابط الخريطة">
-                    <button id="save-btn" class="btn-main" onclick="addClient()">تأسيس الحفل</button>
+                    <input id="c-event" placeholder="عنوان المناسبة (زفاف آل فلان)">
+                    <input id="c-img" placeholder="رابط صورة الدعوة">
+                    <input id="c-map" placeholder="رابط موقع القاعة">
+                    <button class="btn-main" onclick="addClient()">حفظ وإعداد</button>
                 </div>
                 <div class="card">
-                    <h3>📝 إضافة وتخصيص</h3>
+                    <h3>📝 إضافة الضيوف</h3>
                     <select id="client-select" onchange="loadAdminTable()"></select>
-                    <input id="g-name" placeholder="اسم الضيف">
-                    <input id="g-phone" placeholder="رقم الجوال (05...)">
-                    <button class="btn-main" style="background:#8ebf9a" onclick="addGuest()">إضافة الضيف</button>
-                    <textarea id="wa-template" rows="3">دعوة خاصة لـ [اسم_الضيف] ✨ نرجو تأكيد حضورك عبر الرابط: [الرابط]</textarea>
+                    <input id="g-name" placeholder="اسم الضيفة / الضيف">
+                    <input id="g-phone" placeholder="رقم الجوال">
+                    <button class="btn-main" style="background:#8ebf9a" onclick="addGuest()">إضافة للقائمة</button>
                 </div>
             </div>
             <div class="card">
                 <h3>📋 قائمة المدعوين</h3>
-                <div id="admin-table"></div>
+                <div id="admin-table">يرجى اختيار العميل أولاً...</div>
             </div>
         </div>
 
-        <div id="guest-page" class="hidden" style="max-width: 500px; margin: auto; text-align: center;">
+        <div id="client-view" class="hidden">
+            <div class="grid">
+                <div class="card" style="text-align: center;"><h1><span id="stat-yes" style="color:#8ebf9a">0</span></h1><p>سيحضرون</p></div>
+                <div class="card" style="text-align: center;"><h1><span id="stat-no" style="color:#e5b3a3">0</span></h1><p>اعتذروا</p></div>
+            </div>
             <div class="card">
-                <h1 id="inv-event"></h1>
-                <img id="inv-img" class="inv-img">
-                <h2 id="inv-guest"></h2>
-                <div id="guest-actions">
-                    <button class="btn-main" style="background:#8ebf9a;" onclick="updateGuest(true)">سأحضر ✅</button>
-                    <button class="btn-main" style="background:#f4f4f4; color:#888;" onclick="updateGuest(false)">أعتذر ❌</button>
-                </div>
-                <div id="guest-final-yes" class="hidden">
-                    <h2 style="color:#8ebf9a">نسعد بحضورك ✨</h2>
-                    <div id="qrcode"></div>
-                </div>
+                <table id="client-table"><thead><tr><th>الاسم</th><th>الحالة</th></tr></thead><tbody id="client-body"></tbody></table>
             </div>
         </div>
+    </div>
+
+    <div id="guest-page" class="hidden" style="display: flex; align-items: center; justify-content: center; min-height: 80vh;">
+        <div class="inv-box card">
+            <h1 id="inv-event" style="margin-bottom: 20px;">دعوة فرح</h1>
+            <img id="inv-img" class="inv-img" src="">
+            <h2 id="inv-guest" style="font-family: 'Amiri', serif; font-size: 2.2em; margin-bottom: 10px;"></h2>
+            
+            <div id="guest-actions">
+                <p style="margin-bottom: 25px; color: #888;">ننتظر بشوق رؤيتك، هل ستنيرين حفلنا؟</p>
+                <button class="btn-main" style="background:#8ebf9a; margin-bottom:15px; font-size: 1.1em;" onclick="updateGuest(true)">بكل حب، سأحضر ✨</button>
+                <button class="btn-main" style="background:#f4f4f4; color: #888; font-size: 1em;" onclick="updateGuest(false)">أعتذر عن الحضور</button>
+            </div>
+            
+            <div id="guest-final-yes" class="hidden">
+                <h2 style="color:#8ebf9a">نسعد جداً بحضورك! ✨</h2>
+                <p>يرجى حفظ الباركود لاستخدامه عند الدخول:</p>
+                <div id="qrcode" class="qr-box"></div>
+                <p style="margin-top: 25px;">📍 الموقع: <a id="inv-map" href="#" style="color:var(--rose-gold-text); text-decoration: underline;">اضغطي هنا للخريطة</a></p>
+            </div>
+            
+            <div id="guest-final-no" class="hidden">
+                <h3 style="color:#e5b3a3">نشكرك لاهتمامك، ونتمنى رؤيتك في مناسبات قادمة.</h3>
+            </div>
+        </div>
+    </div>
+
 </div>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, query, where, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, query, where, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-const firebaseConfig = { /* نفس إعداداتك */ };
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+    const firebaseConfig = {
+        apiKey: "AIzaSyBycODn3kTe7uRIBYifDogSPmv2towU6lA",
+        authDomain: "wedding-system-6fadd.firebaseapp.com",
+        projectId: "wedding-system-6fadd",
+        storageBucket: "wedding-system-6fadd.firebasestorage.app",
+        messagingSenderId: "902051092170",
+        appId: "1:902051092170:web:e228d3138a5b091b974633"
+    };
 
-// 🔥 تحديث الميتا حسب الضيف
-function updateMetaForGuest(name){
-    document.title = "دعوة خاصة لـ " + name + " 💍";
-    document.querySelector('meta[property="og:title"]').setAttribute("content", document.title);
-}
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
 
-window.onload = () => {
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('id')) loadGuest(urlParams.get('id'));
-};
+    window.onload = () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const gId = urlParams.get('id');
+        if (gId) return loadGuest(gId);
 
-async function loadGuest(id){
-    const gSnap = await getDoc(doc(db, "v9_guests", id));
-    const g = gSnap.data();
+        const savedUser = localStorage.getItem('loggedUser');
+        const savedRole = localStorage.getItem('userRole');
+        if (savedUser) return showMain(savedRole, savedUser);
+    };
 
-    document.getElementById('guest-page').classList.remove('hidden');
-    document.getElementById('inv-guest').innerText = "يا " + g.name;
+    window.handleLogin = async () => {
+        const u = document.getElementById('user-input').value;
+        const p = document.getElementById('pass-input').value;
+        if(u === "admin" && p === "123456") {
+            localStorage.setItem('loggedUser', 'admin');
+            localStorage.setItem('userRole', 'admin');
+            location.reload();
+        } else {
+            const q = query(collection(db, "v7_clients"), where("name", "==", u));
+            const s = await getDocs(q);
+            if(!s.empty) {
+                localStorage.setItem('loggedUser', u);
+                localStorage.setItem('userRole', 'client');
+                location.reload();
+            } else alert("المعذرة، الاسم غير موجود");
+        }
+    };
 
-    updateMetaForGuest(g.name); // 🔥 هنا السحر
-}
+    function showMain(role, user) {
+        document.getElementById('login-page').classList.add('hidden');
+        document.getElementById('main-page').classList.remove('hidden');
+        if(role === 'admin') {
+            document.getElementById('admin-view').classList.remove('hidden');
+            loadClientsList();
+        } else {
+            document.getElementById('client-view').classList.remove('hidden');
+            loadClientStats(user);
+        }
+    }
+
+    window.logout = () => { localStorage.clear(); location.reload(); };
+
+    window.addClient = async () => {
+        const n = document.getElementById('c-name').value;
+        const e = document.getElementById('c-event').value;
+        const i = document.getElementById('c-img').value;
+        const m = document.getElementById('c-map').value;
+        await addDoc(collection(db, "v7_clients"), { name: n, event: e, img: i, map: m });
+        alert("تم الحفظ بنجاح 🌸"); loadClientsList();
+    };
+
+    async function loadClientsList() {
+        const sel = document.getElementById('client-select');
+        const s = await getDocs(collection(db, "v7_clients"));
+        sel.innerHTML = "<option value=''>اختر العميل...</option>";
+        s.forEach(d => sel.innerHTML += `<option value="${d.data().name}">${d.data().name}</option>`);
+    }
+
+    window.addGuest = async () => {
+        const c = document.getElementById('client-select').value;
+        const n = document.getElementById('g-name').value;
+        let p = document.getElementById('g-phone').value;
+        if(p.startsWith('0')) p = '966' + p.substring(1);
+        await addDoc(collection(db, "v7_guests"), { belongsTo: c, name: n, phone: p, status: "انتظار" });
+        document.getElementById('g-name').value = ""; document.getElementById('g-phone').value = "";
+        loadAdminTable();
+    };
+
+    window.loadAdminTable = async () => {
+        const c = document.getElementById('client-select').value;
+        const q = query(collection(db, "v7_guests"), where("belongsTo", "==", c));
+        const s = await getDocs(q);
+        let h = `<table><tr><th>الاسم</th><th>الحالة</th><th>إجراء</th></tr>`;
+        s.forEach(d => {
+            const g = d.data();
+            const link = window.location.href.split('?')[0] + "?id=" + d.id;
+            h += `<tr><td>${g.name}</td><td>${g.status}</td><td>
+                <button class="btn-wa" onclick="sendWA('${g.phone}', '${g.name}', '${link}')">إرسال 📱</button>
+                <button class="btn-danger" onclick="delG('${d.id}')">حذف</button></td></tr>`;
+        });
+        document.getElementById('admin-table').innerHTML = h + "</table>";
+    };
+
+    window.sendWA = (p, n, l) => {
+        const text = encodeURIComponent(`دعوة خاصة لـ ${n} ✨\nيسعدنا حضورك ومشاركتنا الفرحة، يرجى تأكيد حضورك عبر الرابط:\n${l}`);
+        window.open(`https://wa.me/${p}?text=${text}`);
+    };
+
+    window.delG = async (id) => { if(confirm("حذف؟")) { await deleteDoc(doc(db, "v7_guests", id)); loadAdminTable(); }};
+
+    async function loadGuest(id) {
+        currentGuestId = id;
+        document.getElementById('login-page').classList.add('hidden');
+        document.getElementById('guest-page').classList.remove('hidden');
+        const gDoc = await getDoc(doc(db, "v7_guests", id));
+        if(!gDoc.exists()) return;
+        const g = gDoc.data();
+        document.getElementById('inv-guest').innerText = g.name;
+
+        const q = query(collection(db, "v7_clients"), where("name", "==", g.belongsTo));
+        const cS = await getDocs(q);
+        cS.forEach(d => {
+            const c = d.data();
+            document.getElementById('inv-img').src = c.img;
+            document.getElementById('inv-event').innerText = c.event;
+            document.getElementById('inv-map').href = c.map;
+        });
+
+        if(g.status === "حضور") showF(true);
+        else if(g.status === "اعتذار") showF(false);
+    }
+
+    let currentGuestId = "";
+    window.updateGuest = async (yes) => {
+        const s = yes ? "حضور" : "اعتذار";
+        await updateDoc(doc(db, "v7_guests", currentGuestId), { status: s });
+        showF(yes);
+    };
+
+    function showF(yes) {
+        document.getElementById('guest-actions').classList.add('hidden');
+        if(yes) {
+            document.getElementById('guest-final-yes').classList.remove('hidden');
+            new QRCode(document.getElementById("qrcode"), { text: currentGuestId, width: 140, height: 140 });
+        } else {
+            document.getElementById('guest-final-no').classList.remove('hidden');
+        }
+    }
+
+    async function loadClientStats(user) {
+        const q = query(collection(db, "v7_guests"), where("belongsTo", "==", user));
+        const s = await getDocs(q);
+        let counts = { y:0, n:0 };
+        const body = document.getElementById('client-body');
+        body.innerHTML = "";
+        s.forEach(d => {
+            const g = d.data();
+            if(g.status==='حضور') counts.y++; else if(g.status==='اعتذار') counts.n++;
+            body.innerHTML += `<tr><td>${g.name}</td><td>${g.status}</td></tr>`;
+        });
+        document.getElementById('stat-yes').innerText = counts.y;
+        document.getElementById('stat-no').innerText = counts.n;
+    }
 </script>
-
 </body>
 </html>
