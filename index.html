@@ -17,7 +17,9 @@
         .btn-gold { background: var(--gold); color: white; width: 100%; }
         .btn-scan { background: #3498db; color: white; padding: 8px 20px; width: auto; margin-left: 10px; }
         .btn-wa { background: #25D366; color: white; text-decoration: none; padding: 8px 12px; border-radius: 8px; font-size: 13px; display: inline-block; font-weight: bold; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; min-width: 600px; }
+        .btn-del { background: #ff4d4d; color: white; padding: 5px 8px; border-radius: 5px; font-size: 12px; margin-right: 5px; }
+        .btn-edit { background: #eee; color: #333; padding: 5px 8px; border-radius: 5px; font-size: 12px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; min-width: 650px; }
         th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: center; }
         .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
         .stat-box { background: white; padding: 20px; border-radius: 15px; text-align: center; border: 2px solid var(--gold); }
@@ -96,7 +98,7 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, query, where, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, query, where, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyBycODn3kTe7uRIBYifDogSPmv2towU6lA",
@@ -109,21 +111,25 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-
-    // --- رابط موقعك الثابت على جيت هب ---
     const BASE_URL = "https://abdulrhman9591.github.io/wedding-system1/";
+
+    // وظيفة الحذف للأدمن
+    window.deleteGuest = async (id, cName) => {
+        if(confirm("هل أنت متأكد من حذف هذا الضيف؟")) {
+            await deleteDoc(doc(db, "v30_guests", id));
+            loadData(cName);
+        }
+    };
 
     // وظيفة تصفير الحالة للأدمن
     window.resetGuest = async (id, cName) => {
         const s = prompt("الحالة الجديدة: (انتظار / حضور / اعتذار)", "انتظار");
         if(s) { 
             await updateDoc(doc(db, "v30_guests", id), { status: s }); 
-            alert("تم التعديل");
             loadData(cName); 
         }
     };
 
-    // تسجيل الدخول
     document.getElementById('login-btn').onclick = async () => {
         const u = document.getElementById('user-input').value;
         const p = document.getElementById('pass-input').value;
@@ -132,13 +138,12 @@
             localStorage.setItem('role', 'admin'); localStorage.setItem('user', u);
             location.reload();
         } else {
-            // التحقق من العميل
             const q = query(collection(db, "v30_data"), where("name", "==", u), where("password", "==", p));
             const snap = await getDocs(q);
             if(!snap.empty) {
                 localStorage.setItem('role', 'client'); localStorage.setItem('user', u);
                 location.reload();
-            } else { alert("اسم المستخدم أو كلمة المرور خطأ"); }
+            } else { alert("خطأ في البيانات"); }
         }
     };
 
@@ -146,7 +151,7 @@
         const q = query(collection(db, "v30_guests"), where("belongsTo", "==", clientName));
         const snap = await getDocs(q);
         let yes = 0, no = 0, html = `<table><tr><th>الاسم</th><th>الحالة</th>`;
-        if(localStorage.getItem('role') === 'admin') html += `<th>إرسال الدعوة</th><th>تحكم</th>`;
+        if(localStorage.getItem('role') === 'admin') html += `<th>إرسال</th><th>تحكم</th>`;
         html += `</tr>`;
 
         snap.forEach(d => {
@@ -154,14 +159,16 @@
             if(g.status === "حضور" || g.status === "تم الدخول ✅") yes++;
             if(g.status === "اعتذار") no++;
 
-            // الرابط الذي سيتم إرساله للواتساب
             const invLink = `${BASE_URL}?id=${d.id}`;
-            const msg = `نتشرف بدعوتكم لحضور حفلنا عبر الرابط التالي:%0A${invLink}`;
+            const msg = `نتشرف بدعوتكم لحضور حفلنا عبر الرابط:%0A${invLink}`;
 
             html += `<tr><td>${g.name}</td><td><span class="status-tag">${g.status}</span></td>`;
             if(localStorage.getItem('role') === 'admin') {
                 html += `<td><a href="https://wa.me/${g.phone}?text=${msg}" target="_blank" class="btn-wa">واتساب ✅</a></td>`;
-                html += `<td><button onclick="resetGuest('${d.id}', '${clientName}')" style="background:#eee; padding:5px; border-radius:5px;">⚙️</button></td>`;
+                html += `<td>
+                    <button onclick="resetGuest('${d.id}', '${clientName}')" class="btn-edit">⚙️</button>
+                    <button onclick="deleteGuest('${d.id}', '${clientName}')" class="btn-del">🗑️ حذف</button>
+                </td>`;
             }
             html += `</tr>`;
         });
@@ -176,7 +183,6 @@
         const guestId = urlParams.get('id');
 
         if(guestId) {
-            // واجهة الضيف
             document.getElementById('login-section').classList.add('hidden');
             document.getElementById('guest-section').classList.remove('hidden');
             const gDoc = await getDoc(doc(db, "v30_guests", guestId));
@@ -200,10 +206,10 @@
                 }
             }
         } else if(localStorage.getItem('role')) {
-            // واجهة الإدارة
             document.getElementById('login-section').classList.add('hidden');
             document.getElementById('dashboard-section').classList.remove('hidden');
             document.getElementById('stats-view').classList.remove('hidden');
+            
             const role = localStorage.getItem('role');
             const user = localStorage.getItem('user');
             document.getElementById('welcome-msg').innerText = "مرحباً بك: " + user;
@@ -235,7 +241,6 @@
                    loadData(sel.value);
                 };
             } else {
-                // للعميل فقط
                 document.getElementById('open-scanner-btn').classList.add('hidden');
                 loadData(user);
             }
