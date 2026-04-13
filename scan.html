@@ -3,31 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>بوابة الدخول - مسح الكود</title>
+    <title>بوابة الدخول الملكية - مسح الكود</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
-        body { font-family: 'Cairo', sans-serif; background: #fdf2f2; text-align: center; padding: 20px; }
-        .card { background: white; max-width: 500px; margin: auto; padding: 30px; border-radius: 20px; border: 2px solid #e5b3a3; box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
-        #reader { width: 100%; border-radius: 15px; overflow: hidden; background: #fafafa; }
-        .result { margin-top: 20px; padding: 15px; border-radius: 10px; display: none; font-weight: bold; }
+        :root { --main-color: #e5b3a3; --bg-color: #fdf2f2; --success: #d4edda; --danger: #f8d7da; --warning: #fff3cd; }
+        body { font-family: 'Cairo', sans-serif; background: var(--bg-color); text-align: center; padding: 20px; margin: 0; }
+        .card { background: white; max-width: 500px; margin: auto; padding: 30px; border-radius: 25px; border: 2px solid var(--main-color); box-shadow: 0 10px 30px rgba(0,0,0,0.08); }
+        h2 { color: var(--main-color); margin-bottom: 5px; }
+        #reader { width: 100%; border-radius: 20px; overflow: hidden; background: #fafafa; border: 1px solid #eee; }
+        .result { margin-top: 20px; padding: 20px; border-radius: 15px; display: none; font-weight: bold; font-size: 1.1em; line-height: 1.6; }
+        .btn-back { background: #888; color: white; border: none; padding: 12px 30px; border-radius: 12px; cursor: pointer; font-family: 'Cairo'; font-weight: bold; transition: 0.3s; margin-top: 20px; }
+        .btn-back:hover { background: #666; }
     </style>
 </head>
 <body>
 
 <div class="card">
-    <h2 style="color: #e5b3a3;">بوابة الدخول الملكية 🌸</h2>
-    <p>وجه الكاميرا نحو كود الضيف للتحقق</p>
+    <h2>بوابة الدخول الملكية 🌸</h2>
+    <p style="color: #666; margin-bottom: 20px;">وجه الكاميرا نحو كود الضيف للتحقق من صلاحية الدخول</p>
+    
     <div id="reader"></div>
+    
     <div id="scanned-result" class="result"></div>
-    <br>
-    <button onclick="location.href='index.html'" style="background:#888; color:white; border:none; padding:12px 25px; border-radius:10px; cursor:pointer; font-family:'Cairo'">العودة للوحة التحكم</button>
+    
+    <button class="btn-back" onclick="location.href='index.html'">العودة للوحة التحكم</button>
 </div>
 
 <script type="module">
+    // استيراد مكتبات Firebase
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+    // إعدادات Firebase الخاصة بك
     const firebaseConfig = {
         apiKey: "AIzaSyBycODn3kTe7uRIBYifDogSPmv2towU6lA",
         authDomain: "wedding-system-6fadd.firebaseapp.com",
@@ -40,34 +48,58 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
+    // دالة المعالجة عند نجاح المسح
     async function onScanSuccess(decodedText) {
         const resDiv = document.getElementById('scanned-result');
         resDiv.style.display = 'block';
-        resDiv.innerHTML = "جاري التحقق من الضيف...";
+        resDiv.innerHTML = "جاري التحقق من البيانات...";
         resDiv.style.background = "#eee";
+        resDiv.style.color = "#333";
 
         try {
-            // ملاحظة: تأكد أن اسم المجموعة v30_guests مطابق لما في الـ Firebase عندك
+            // جلب بيانات الضيف بناءً على الـ ID الممسوح
             const gRef = doc(db, "v30_guests", decodedText);
             const gSnap = await getDoc(gRef);
             
             if (gSnap.exists()) {
-                await updateDoc(gRef, { status: "تم الدخول ✅", checkInTime: new Date() });
-                resDiv.innerHTML = "أهلاً بك: " + gSnap.data().name + " ✅<br>تم تسجيل الدخول";
-                resDiv.style.background = "#d4edda";
-                resDiv.style.color = "#155724";
+                const guestData = gSnap.data();
+
+                // 1. التحقق من منع تكرار الدخول
+                if (guestData.status === "تم الدخول ✅") {
+                    resDiv.innerHTML = "تنبيه: دخول مكرر! ❌<br>هذا الكود تم استخدامه مسبقاً لدخول الضيف: " + guestData.name;
+                    resDiv.style.background = "#fff3cd"; // أصفر للتنبيه
+                    resDiv.style.color = "#856404";
+                } 
+                // 2. التحقق إذا كان الضيف قد اعتذر مسبقاً
+                else if (guestData.status === "اعتذار") {
+                    resDiv.innerHTML = "تنبيه! ⚠️<br>الضيف " + guestData.name + " مسجل في النظام بحالة (اعتذار)";
+                    resDiv.style.background = "#f8d7da";
+                    resDiv.style.color = "#721c24";
+                }
+                // 3. السماح بالدخول لأول مرة
+                else {
+                    await updateDoc(gRef, { 
+                        status: "تم الدخول ✅", 
+                        checkInTime: new Date().toLocaleString('ar-SA') 
+                    });
+                    resDiv.innerHTML = "أهلاً بك: " + guestData.name + " ✅<br>تم تسجيل الدخول بنجاح. تفضل بالدخول";
+                    resDiv.style.background = "#d4edda"; // أخضر للنجاح
+                    resDiv.style.color = "#155724";
+                }
             } else {
-                resDiv.innerHTML = "عذراً، الكود غير صحيح أو غير مسجل ❌";
+                // الكود غير موجود في قاعدة البيانات
+                resDiv.innerHTML = "عذراً، الكود غير صحيح أو غير مسجل في النظام ❌";
                 resDiv.style.background = "#f8d7da";
                 resDiv.style.color = "#721c24";
             }
         } catch (e) {
-            resDiv.innerHTML = "خطأ في الاتصال بقاعدة البيانات";
-            console.error(e);
+            resDiv.innerHTML = "حدث خطأ في الاتصال بقاعدة البيانات";
+            console.error("Error updating guest status:", e);
         }
     }
 
-    const html5QrScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
+    // إعداد الماسح (السرعة وحجم مربع المسح)
+    const html5QrScanner = new Html5QrcodeScanner("reader", { fps: 15, qrbox: 250 });
     html5QrScanner.render(onScanSuccess);
 </script>
 </body>
