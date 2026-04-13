@@ -68,8 +68,9 @@
                 <input id="c-name" placeholder="اسم المستخدم للعميل">
                 <input id="c-pass" placeholder="كلمة المرور">
                 <input id="c-event" placeholder="اسم المناسبة">
+                <input id="c-host" placeholder="اسم الداعي (الذي سيظهر في الرسالة)">
                 <input id="c-img" placeholder="رابط صورة الدعوة">
-                <input id="c-map" placeholder="رابط الموقع (Google Maps)">
+                <input id="c-map" placeholder="رابط الموقع">
                 <button class="btn-gold" id="save-client">تأسيس الحفل</button>
             </div>
             <div class="card">
@@ -82,30 +83,30 @@
         </div>
 
         <div class="card" style="overflow-x:auto;">
-            <h3 id="table-title">بيانات الضيوف</h3>
+            <h3>بيانات الضيوف</h3>
             <div id="data-table"></div>
         </div>
     </div>
 
     <div id="edit-modal" class="modal hidden">
         <div class="modal-content">
-            <h3 style="color:var(--gold)">تعديل بيانات الضيف</h3>
-            <input id="edit-g-name" placeholder="الاسم">
-            <input id="edit-g-phone" placeholder="الجوال">
+            <h3>تعديل الضيف</h3>
+            <input id="edit-g-name">
+            <input id="edit-g-phone">
             <select id="edit-g-status">
                 <option value="انتظار">انتظار</option>
                 <option value="حضور">حضور</option>
                 <option value="اعتذار">اعتذار</option>
             </select>
-            <button class="btn-gold" id="update-guest-btn">حفظ التعديلات</button>
-            <button onclick="closeEditModal()" style="background:none; color:#888; margin-top:10px;">إلغاء</button>
+            <button class="btn-gold" id="update-guest-btn">حفظ</button>
+            <button onclick="closeEditModal()" style="background:none; color:#888;">إلغاء</button>
         </div>
     </div>
 
     <div id="guest-section" class="hidden">
         <div class="card">
-            <h1 id="inv-event" style="color:var(--dark-gold)"></h1>
-            <img id="inv-img" style="width:100%; border-radius:15px; margin-bottom:15px;">
+            <h1 id="inv-event"></h1>
+            <img id="inv-img" style="width:100%; border-radius:15px;">
             <div id="inv-guest" style="font-size:1.5rem; font-weight:bold; margin:15px 0;"></div>
             <div id="guest-actions">
                 <button id="btn-yes" style="background:#8ebf9a; color:white; margin-bottom:10px;">تأكيد الحضور ✅</button>
@@ -113,8 +114,8 @@
             </div>
             <div id="qr-result" class="hidden">
                 <div id="qrcode" style="display:flex; justify-content:center; margin:15px;"></div>
-                <p style="color:#27ae60; font-weight:bold;">ننتظر تشريفكم ✅</p>
-                <a id="inv-map" target="_blank" style="color:var(--gold); font-weight:bold;">📍 موقع القاعة</a>
+                <p style="color:#27ae60;">ننتظر تشريفكم ✅</p>
+                <a id="inv-map" target="_blank" style="color:var(--gold);">📍 الموقع</a>
             </div>
         </div>
     </div>
@@ -132,26 +133,26 @@
     let selPkg = ""; let adminPh = ""; let curId = ""; let curCl = "";
     const role = sessionStorage.getItem('role');
 
-    window.selectPkg = (el, name, price) => {
-        document.querySelectorAll('.option-box').forEach(b => b.classList.remove('selected'));
-        el.classList.add('selected'); selPkg = `${name} (${price} ريال)`;
-    };
-
     async function loadSet() {
         const s = await getDoc(doc(db, "settings", "main"));
         if(s.exists()) { adminPh = s.data().phone; if(document.getElementById('set-admin-phone')) document.getElementById('set-admin-phone').value = adminPh; }
     }
 
+    window.selectPkg = (el, name, price) => {
+        document.querySelectorAll('.option-box').forEach(b => b.classList.remove('selected'));
+        el.classList.add('selected'); selPkg = `${name} (${price} ريال)`;
+    };
+
     document.getElementById('send-order').onclick = () => {
         const n = document.getElementById('order-name').value;
         const c = document.getElementById('order-count').value;
-        if(!n || !selPkg || !adminPh) return alert("يرجى إكمال البيانات");
-        window.open(`https://wa.me/${adminPh}?text=طلب خدمة جديد 🌸%0Aالاسم: ${n}%0Aعدد الضيوف: ${c}%0Aالباقة: ${selPkg}`, '_blank');
+        if(!n || !selPkg || !adminPh) return alert("أكمل البيانات");
+        window.open(`https://wa.me/${adminPh}?text=طلب جديد:%0Aالاسم: ${n}%0Aعدد الضيوف: ${c}%0Aالباقة: ${selPkg}`, '_blank');
     };
 
     document.getElementById('save-settings').onclick = async () => {
         await setDoc(doc(db, "settings", "main"), { phone: document.getElementById('set-admin-phone').value });
-        alert("تم تحديث رقم الإدارة"); location.reload();
+        alert("تم الحفظ"); location.reload();
     };
 
     window.logout = () => { sessionStorage.clear(); location.reload(); };
@@ -176,7 +177,37 @@
         closeEditModal(); loadData(curCl);
     };
 
-    window.delG = async (id, cl) => { if(confirm("هل أنت متأكد من الحذف؟")) { await deleteDoc(doc(db, "v30_guests", id)); loadData(cl); } };
+    window.delG = async (id, cl) => { if(confirm("حذف؟")) { await deleteDoc(doc(db, "v30_guests", id)); loadData(cl); } };
+
+    async function loadData(cl) {
+        // جلب بيانات العميل لمعرفة اسم المناسبة والداعي
+        const cSnap = await getDocs(query(collection(db, "v30_data"), where("name", "==", cl)));
+        let eventName = ""; let hostName = "";
+        cSnap.forEach(cd => { eventName = cd.data().event; hostName = cd.data().host || "إدارة الحفل"; });
+
+        const q = query(collection(db, "v30_guests"), where("belongsTo", "==", cl));
+        const snap = await getDocs(q);
+        let h = `<table><tr><th>الاسم</th><th>الحالة</th>`;
+        if(role === 'admin') h += `<th>الإجراءات</th>`;
+        h += `</tr>`;
+        
+        snap.forEach(d => {
+            const g = d.data(); const link = `${BASE_URL}?id=${d.id}`;
+            // الرسالة الفخمة المنسقة
+            const msg = `السلام عليكم ورحمة الله وبركاته..%0A%0Aأهلاً بك يا ${g.name} ✨%0A%0Aنتشرف بدعوتكم لحضور ${eventName}، وبكم تكتمل فرحتنا وتزدان ليالينا.. 🌸%0A%0Aللحصول على بطاقة الدعوة وتأكيد الحضور أو الاعتذار، يرجى الضغط على الرابط التالي:%0A${link}%0A%0Aالداعي: ${hostName}%0Aفأهلاً وسهلاً بكم.. 💐`;
+
+            h += `<tr><td>${g.name}</td><td>${g.status}</td>`;
+            if(role === 'admin') {
+                h += `<td>`;
+                h += `<button onclick="openEdit('${d.id}','${cl}')" class="btn-edit">تعديل</button> `;
+                h += `<a href="https://wa.me/${g.phone}?text=${msg}" target="_blank" class="btn-wa">ارسال واتساب</a> `;
+                h += `<button onclick="delG('${d.id}','${cl}')" class="btn-del">حذف</button>`;
+                h += `</td>`;
+            }
+            h += `</tr>`;
+        });
+        document.getElementById('data-table').innerHTML = h + "</table>";
+    }
 
     document.getElementById('login-btn').onclick = async () => {
         const u = document.getElementById('user-input').value;
@@ -186,31 +217,9 @@
             const q = query(collection(db, "v30_data"), where("name","==",u), where("password","==",p));
             const snap = await getDocs(q);
             if(!snap.empty) { sessionStorage.setItem('role','client'); sessionStorage.setItem('user',u); location.reload(); }
-            else alert("بيانات الدخول غير صحيحة");
+            else alert("بيانات خاطئة");
         }
     };
-
-    async function loadData(cl) {
-        const q = query(collection(db, "v30_guests"), where("belongsTo", "==", cl));
-        const snap = await getDocs(q);
-        let h = `<table><tr><th>الاسم</th><th>الحالة</th>`;
-        if(role === 'admin') h += `<th>الإجراءات</th>`;
-        h += `</tr>`;
-        
-        snap.forEach(d => {
-            const g = d.data(); const link = `${BASE_URL}?id=${d.id}`;
-            h += `<tr><td>${g.name}</td><td>${g.status}</td>`;
-            if(role === 'admin') {
-                h += `<td>`;
-                h += `<button onclick="openEdit('${d.id}','${cl}')" class="btn-edit">تعديل</button> `;
-                h += `<a href="https://wa.me/${g.phone}?text=نتشرف بدعوتكم: ${link}" target="_blank" class="btn-wa">واتساب</a> `;
-                h += `<button onclick="delG('${d.id}','${cl}')" class="btn-del">حذف</button>`;
-                h += `</td>`;
-            }
-            h += `</tr>`;
-        });
-        document.getElementById('data-table').innerHTML = h + "</table>";
-    }
 
     async function init() {
         await loadSet();
@@ -247,12 +256,19 @@
                 document.getElementById('admin-area').classList.remove('hidden');
                 const s = await getDocs(collection(db, "v30_data"));
                 const sel = document.getElementById('client-select');
-                sel.innerHTML = "<option value=''>اختر العميل لعرض ضيوفه</option>";
+                sel.innerHTML = "<option value=''>اختر الحفل</option>";
                 s.forEach(d => sel.innerHTML += `<option value="${d.data().name}">${d.data().name}</option>`);
                 sel.onchange = () => loadData(sel.value);
                 document.getElementById('save-client').onclick = async () => {
-                    await addDoc(collection(db, "v30_data"), { name: document.getElementById('c-name').value, password: document.getElementById('c-pass').value, event: document.getElementById('c-event').value, img: document.getElementById('c-img').value, map: document.getElementById('c-map').value });
-                    alert("تم تأسيس الحفل بنجاح"); location.reload();
+                    await addDoc(collection(db, "v30_data"), { 
+                        name: document.getElementById('c-name').value, 
+                        password: document.getElementById('c-pass').value, 
+                        event: document.getElementById('c-event').value, 
+                        host: document.getElementById('c-host').value, 
+                        img: document.getElementById('c-img').value, 
+                        map: document.getElementById('c-map').value 
+                    });
+                    alert("تم التأسيس"); location.reload();
                 };
                 document.getElementById('save-guest').onclick = async () => {
                     let p = document.getElementById('g-phone').value; if(p.startsWith('0')) p = '966' + p.substring(1);
