@@ -272,7 +272,7 @@
     // --- المعالجات الأساسية ---
     document.getElementById('login-btn').onclick = async () => {
         const u = document.getElementById('user-input').value, p = document.getElementById('pass-input').value;
-        if(u === "admin" && p === "123456") { sessionStorage.setItem('role','admin'); sessionStorage.setItem('user',u); location.reload(); }
+        if(u === "admin" && p === "Aa0532956835") { sessionStorage.setItem('role','admin'); sessionStorage.setItem('user',u); location.reload(); }
         else {
             const snap = await getDocs(query(collection(db, "v30_data"), where("name","==",u), where("password","==",p)));
             if(!snap.empty) { sessionStorage.setItem('role','client'); sessionStorage.setItem('user',u); location.reload(); } else alert("خطأ!");
