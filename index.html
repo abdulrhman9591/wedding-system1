@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>نظام رونق للدعوات ⚜️</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
     <style>
         :root { --pink: #fdf2f2; --gold: #c5a059; --dark-gold: #b38b7d; --black: #1a1a1a; }
         body { font-family: 'Cairo', sans-serif; background-color: var(--pink); background-image: url('https://www.transparenttextures.com/patterns/islamic-art.png'); margin: 0; padding: 0; direction: rtl; }
@@ -31,8 +32,10 @@
         .status-اعتذار { background: #ffebee; color: #c62828; }
         .status-انتظار { background: #fff8e1; color: #f9a825; }
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 9999; }
+        
+        /* تنسيق كود الدخول والباركود */
         .entry-code-box { background: #f9f9f9; border: 2px dashed var(--gold); padding: 15px; margin-top: 15px; border-radius: 10px; }
-        .qr-placeholder { font-size: 20px; font-weight: bold; letter-spacing: 2px; color: var(--black); }
+        #barcode-img { width: 100%; max-width: 300px; height: auto; margin: 10px auto; }
     </style>
 </head>
 <body>
@@ -44,19 +47,25 @@
             <h2 id="guest-welcome" style="color:var(--gold)"></h2>
             <img id="event-image" style="width:100%; border-radius:15px; border:2px solid var(--gold); margin-bottom:20px;">
             <p id="event-details" style="font-weight: bold;"></p>
+            
             <div id="guest-actions" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                 <button class="btn-gold" style="background:#27ae60" id="btn-confirm">تأكيد حضور</button>
                 <button class="btn-gold" style="background:#e74c3c" id="btn-decline">اعتذار</button>
             </div>
+
             <div id="after-confirm-area" class="hidden">
                 <div class="entry-code-box">
-                    <p style="margin:0; color:var(--dark-gold);">كود الدخول الخاص بك (يستخدم مرة واحدة)</p>
-                    <div id="entry-code-display" class="qr-placeholder"></div>
-                    <small>يرجى إبراز هذا الكود للمنظم عند الباب</small>
+                    <p style="margin:0; color:var(--dark-gold); font-weight:bold;">بطاقة دخولك الشخصية 🎫</p>
+                    <svg id="barcode-img"></svg>
+                    <p id="entry-code-text" style="font-weight:bold; letter-spacing: 2px; margin-top:5px;"></p>
+                    <small>يرجى إبراز هذا الباركود للمنظم عند الباب</small>
                 </div>
                 <button class="btn-gold" style="margin-top:15px; background:#2c3e50" id="btn-map">📍 موقع المناسبة</button>
             </div>
-            <div id="decline-msg" class="hidden" style="color: #c62828; margin-top: 20px; font-weight: bold;">نشكرك على إبلاغنا، تمنينا تواجدك معنا.</div>
+
+            <div id="decline-msg" class="hidden" style="color: #c62828; margin-top: 20px; font-weight: bold;">
+                نشكرك على إبلاغنا، تمنينا تواجدك معنا.
+            </div>
         </div>
     </div>
 
@@ -72,7 +81,6 @@
 
     <div id="dashboard-section" class="hidden">
         <div class="brand-header"><img src="logo.jpg" class="main-logo"><h3 id="welcome-msg"></h3></div>
-        
         <div class="stats-grid">
             <div class="stat-card"><h4>إجمالي المدعوين</h4><p id="stat-total">0</p></div>
             <div class="stat-card"><h4>تأكيد حضور</h4><p id="stat-yes">0</p></div>
@@ -87,9 +95,8 @@
                     <button class="btn-nav" onclick="window.open('orders.html', '_blank')">📥 طلبات العملاء</button>
                     <button class="btn-nav" id="view-client-page">📄 صفحة العميل</button>
                 </div>
-                <button id="btn-edit-client-data" class="btn-gold hidden" style="background:#34495e; margin-top:10px;">✏️ تعديل بيانات الحفل المختار</button>
+                <button id="btn-edit-client-data" class="btn-gold hidden" style="background:#34495e; margin-top:10px;">✏️ تعديل بيانات الحفل</button>
             </div>
-
             <div class="card">
                 <h3>🎀 تأسيس حفل جديد</h3>
                 <input id="c-name" placeholder="اسم المستخدم">
@@ -100,7 +107,6 @@
                 <input id="c-map" placeholder="رابط الموقع">
                 <button class="btn-gold" id="save-client">إنشاء الحساب</button>
             </div>
-
             <div class="card">
                 <h3>📝 إضافة ضيوف</h3>
                 <select id="client-select"></select>
@@ -109,7 +115,6 @@
                 <button class="btn-gold" id="save-guest" style="background:#27ae60">إضافة للجدول</button>
             </div>
         </div>
-
         <div class="card" style="overflow-x:auto;">
             <h3 id="table-title">قائمة الضيوف 📜</h3>
             <div id="data-table"></div>
@@ -164,7 +169,6 @@
     const role = sessionStorage.getItem('role');
     const user = sessionStorage.getItem('user');
     let editingGuestId = "";
-    let currentClientDocId = "";
 
     // منطق الواتساب
     window.prepareWA = (phone, name, evName, guestId, host) => {
@@ -181,15 +185,6 @@
         document.getElementById('wa-modal').classList.add('hidden');
     };
 
-    window.openEdit = (id, name, phone, status, cl) => {
-        editingGuestId = id;
-        document.getElementById('edit-name').value = name;
-        document.getElementById('edit-phone').value = phone;
-        document.getElementById('edit-status').value = status;
-        document.getElementById('edit-modal').classList.remove('hidden');
-        window.currentClient = cl;
-    };
-
     window.logout = () => { sessionStorage.clear(); location.reload(); };
 
     async function loadData(cl) {
@@ -197,10 +192,7 @@
         const cSnap = await getDocs(query(collection(db, "v30_data"), where("name", "==", cl)));
         let evName = ""; let host = ""; 
         cSnap.forEach(cd => { 
-            evName = cd.data().event; 
-            host = cd.data().host; 
-            currentClientDocId = cd.id; // تخزين ID العميل للتعديل
-            // ملء بيانات المودال للمستقبل
+            evName = cd.data().event; host = cd.data().host;
             document.getElementById('edit-c-event').value = cd.data().event;
             document.getElementById('edit-c-host').value = cd.data().host;
             document.getElementById('edit-c-img').value = cd.data().img;
@@ -208,7 +200,6 @@
             document.getElementById('edit-c-pass').value = cd.data().password;
             document.getElementById('edit-c-doc-id').value = cd.id;
         });
-
         if(role === 'admin') document.getElementById('btn-edit-client-data').classList.remove('hidden');
 
         const snap = await getDocs(query(collection(db, "v30_guests"), where("belongsTo", "==", cl)));
@@ -228,54 +219,66 @@
         document.getElementById('stat-no').innerText = guestsArr.filter(g => g.status === 'اعتذار').length;
     }
 
-    // فتح مودال تعديل بيانات الحفل
-    document.getElementById('btn-edit-client-data').onclick = () => {
-        document.getElementById('client-edit-modal').classList.remove('hidden');
-    };
-
-    // تنفيذ تحديث بيانات الحفل
-    document.getElementById('confirm-client-update').onclick = async () => {
-        const docId = document.getElementById('edit-c-doc-id').value;
-        const ref = doc(db, "v30_data", docId);
-        await updateDoc(ref, {
-            event: document.getElementById('edit-c-event').value,
-            host: document.getElementById('edit-c-host').value,
-            img: document.getElementById('edit-c-img').value,
-            map: document.getElementById('edit-c-map').value,
-            password: document.getElementById('edit-c-pass').value
-        });
-        alert("تم تحديث بيانات الحفل بنجاح ✅");
-        document.getElementById('client-edit-modal').classList.add('hidden');
-        loadData(document.getElementById('client-select').value);
-    };
-
+    // منطق الضيف والباركود
     async function handleGuestView(guestId) {
         const gDoc = await getDoc(doc(db, "v30_guests", guestId));
         if (gDoc.exists()) {
             const gData = gDoc.data();
             const cSnap = await getDocs(query(collection(db, "v30_data"), where("name", "==", gData.belongsTo)));
             let cData = {}; cSnap.forEach(d => cData = d.data());
+            
             document.getElementById('guest-section').classList.remove('hidden');
             document.getElementById('guest-welcome').innerText = `أهلاً بك يا ${gData.name}`;
             document.getElementById('event-image').src = cData.img;
             document.getElementById('event-details').innerText = `${cData.event} - الداعي: ${cData.host}`;
-            if (gData.status === "حضور") showEntryPass(guestId, cData.map);
-            else if (gData.status === "اعتذار") { document.getElementById('guest-actions').classList.add('hidden'); document.getElementById('decline-msg').classList.remove('hidden'); }
-            document.getElementById('btn-confirm').onclick = async () => { await updateDoc(doc(db, "v30_guests", guestId), { status: "حضور" }); showEntryPass(guestId, cData.map); };
-            document.getElementById('btn-decline').onclick = async () => { await updateDoc(doc(db, "v30_guests", guestId), { status: "اعتذار" }); document.getElementById('guest-actions').classList.add('hidden'); document.getElementById('decline-msg').classList.remove('hidden'); };
+
+            if (gData.status === "حضور") {
+                showEntryPass(guestId, cData.map);
+            } else if (gData.status === "اعتذار") {
+                document.getElementById('guest-actions').classList.add('hidden');
+                document.getElementById('decline-msg').classList.remove('hidden');
+            }
+
+            document.getElementById('btn-confirm').onclick = async () => {
+                await updateDoc(doc(db, "v30_guests", guestId), { status: "حضور" });
+                showEntryPass(guestId, cData.map);
+            };
+            document.getElementById('btn-decline').onclick = async () => {
+                await updateDoc(doc(db, "v30_guests", guestId), { status: "اعتذار" });
+                document.getElementById('guest-actions').classList.add('hidden');
+                document.getElementById('decline-msg').classList.remove('hidden');
+            };
         }
     }
 
     function showEntryPass(id, mapUrl) {
         document.getElementById('guest-actions').classList.add('hidden');
         document.getElementById('after-confirm-area').classList.remove('hidden');
-        document.getElementById('entry-code-display').innerText = id.substring(0, 8).toUpperCase();
+        
+        // توليد الباركود الاحترافي
+        const cleanId = id.substring(0, 10).toUpperCase();
+        JsBarcode("#barcode-img", cleanId, {
+            format: "CODE128",
+            lineColor: "#1a1a1a",
+            width: 2,
+            height: 60,
+            displayValue: false
+        });
+        document.getElementById('entry-code-text').innerText = cleanId;
         document.getElementById('btn-map').onclick = () => window.open(mapUrl, '_blank');
     }
 
-    document.getElementById('confirm-edit').onclick = async () => {
-        await updateDoc(doc(db, "v30_guests", editingGuestId), { name: document.getElementById('edit-name').value, phone: document.getElementById('edit-phone').value, status: document.getElementById('edit-status').value });
-        document.getElementById('edit-modal').classList.add('hidden'); loadData(window.currentClient);
+    // وظائف التحديث والتعامل مع البيانات
+    document.getElementById('confirm-client-update').onclick = async () => {
+        const docId = document.getElementById('edit-c-doc-id').value;
+        await updateDoc(doc(db, "v30_data", docId), {
+            event: document.getElementById('edit-c-event').value,
+            host: document.getElementById('edit-c-host').value,
+            img: document.getElementById('edit-c-img').value,
+            map: document.getElementById('edit-c-map').value,
+            password: document.getElementById('edit-c-pass').value
+        });
+        alert("تم التحديث ✅"); location.reload();
     };
 
     document.getElementById('save-client').onclick = async () => {
