@@ -18,17 +18,17 @@
 
         .container { width: 95%; max-width: 900px; margin: auto; padding: 20px; }
         
-        /* تكبير وتحسين اللوجو */
-        .brand-header { text-align: center; margin-bottom: 30px; }
+        /* تحسين جذري للوجو ليكون واضحاً جداً وفخماً */
+        .brand-header { text-align: center; margin-bottom: 40px; }
         .main-logo {
-            width: 160px; /* تكبير اللوجو */
-            height: 160px; 
+            width: 200px; /* حجم أكبر للوضوح */
+            height: 200px; 
             border-radius: 50%;
-            border: 4px solid var(--gold); 
-            background: white;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.15); 
+            border: 5px double var(--gold); /* إطار ذهبي ملكي مزدوج */
+            background: #ffffff;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2); 
             padding: 10px;
-            object-fit: contain; /* لضمان عدم قص الصورة */
+            object-fit: contain; /* يمنع تشويه الصورة */
         }
 
         .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 25px; }
@@ -64,7 +64,8 @@
         .status-اعتذار { background: #ffebee; color: #c62828; }
         .status-انتظار { background: #fff8e1; color: #f9a825; }
 
-        .btn-wa { background: #25D366; color: white; padding: 8px 12px; border-radius: 8px; font-size: 11px; border: none; cursor: pointer; }
+        .btn-wa { background: #25D366; color: white; padding: 6px 10px; border-radius: 8px; font-size: 11px; margin: 2px; }
+        .btn-edit { background: #3498db; color: white; padding: 6px 10px; border-radius: 8px; font-size: 11px; margin: 2px; }
     </style>
 </head>
 <body>
@@ -100,13 +101,10 @@
                     <button class="btn-nav" onclick="window.open('orders.html', '_blank')">📥 طلبات العملاء</button>
                     <button class="btn-nav" id="view-client-page">📄 صفحة العميل</button>
                 </div>
-                <input id="set-admin-phone" placeholder="رقم واتساب الإدارة (966...)">
-                <button class="btn-gold" id="save-settings" style="margin-top:10px">حفظ رقم الواتساب</button>
             </div>
-            
             <div class="card">
                 <h3>🎀 تأسيس حفل جديد</h3>
-                <input id="c-name" placeholder="اسم المستخدم الجديد">
+                <input id="c-name" placeholder="اسم المستخدم">
                 <input id="c-pass" placeholder="كلمة المرور">
                 <input id="c-event" placeholder="اسم المناسبة">
                 <input id="c-host" placeholder="اسم الداعي">
@@ -114,7 +112,6 @@
                 <input id="c-map" placeholder="رابط الموقع">
                 <button class="btn-gold" id="save-client">إنشاء الحساب</button>
             </div>
-
             <div class="card">
                 <h3>📝 إضافة ضيوف</h3>
                 <select id="client-select"></select>
@@ -130,6 +127,21 @@
             <button onclick="window.logout()" style="margin-top: 20px; background: #eee; color: #666;">تسجيل الخروج</button>
         </div>
     </div>
+
+    <div id="edit-modal" class="hidden" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 9999;">
+        <div class="card" style="width: 90%; max-width: 400px;">
+            <h3>تعديل بيانات الضيف</h3>
+            <input id="edit-name" placeholder="الاسم">
+            <input id="edit-phone" placeholder="الجوال">
+            <select id="edit-status">
+                <option value="انتظار">انتظار</option>
+                <option value="حضور">حضور</option>
+                <option value="اعتذار">اعتذار</option>
+            </select>
+            <button class="btn-gold" id="confirm-edit">تحديث البيانات</button>
+            <button onclick="document.getElementById('edit-modal').classList.add('hidden')" style="background:none; color:red; margin-top:10px;">إلغاء</button>
+        </div>
+    </div>
 </div>
 
 <script type="module">
@@ -143,63 +155,76 @@
 
     const role = sessionStorage.getItem('role');
     const user = sessionStorage.getItem('user');
+    let editingGuestId = "";
 
     async function loadData(cl) {
         if (!cl) return;
-        
-        // جلب بيانات المناسبة
         const cSnap = await getDocs(query(collection(db, "v30_data"), where("name", "==", cl)));
         let evName = ""; let host = ""; 
         cSnap.forEach(cd => { evName = cd.data().event; host = cd.data().host; });
 
-        // جلب الضيوف
         const snap = await getDocs(query(collection(db, "v30_guests"), where("belongsTo", "==", cl)));
         let guestsArr = [];
-        
-        // بناء الجدول: إذا كان آدمن يظهر عمود الإجراءات، إذا كان عميل يختفي
         let h = `<table><tr><th>الاسم</th><th>الحالة</th>`;
         if (role === 'admin') h += `<th>الإجراءات</th>`;
         h += `</tr>`;
         
         snap.forEach(d => {
             const g = d.data(); guestsArr.push(g);
-            const msg = `أهلاً بك يا ${g.name} ✨\nنتشرف بدعوتكم لحضور ${evName}..\nلالتأكيد عبر الرابط:\n${BASE_URL}?id=${d.id}\nالداعي: ${host}`;
+            const msg = `أهلاً بك يا ${g.name} ✨\nنتشرف بدعوتكم لحضور ${evName}..\nللتأكيد عبر الرابط:\n${BASE_URL}?id=${d.id}\nالداعي: ${host}`;
             
             h += `<tr><td>${g.name}</td><td><span class="status-pill status-${g.status}">${g.status}</span></td>`;
             if (role === 'admin') {
-                h += `<td><button onclick="window.sendToWA('${g.phone}', \`${msg}\`)" class="btn-wa">إرسال</button></td>`;
+                h += `<td>
+                    <button onclick="window.sendToWA('${g.phone}', \`${msg}\`)" class="btn-wa">إرسال</button>
+                    <button onclick="window.openEdit('${d.id}', '${g.name}', '${g.phone}', '${g.status}', '${cl}')" class="btn-edit">تعديل</button>
+                </td>`;
             }
             h += `</tr>`;
         });
-        
         document.getElementById('data-table').innerHTML = h + "</table>";
         document.getElementById('stat-total').innerText = guestsArr.length;
         document.getElementById('stat-yes').innerText = guestsArr.filter(g => g.status === 'حضور').length;
         document.getElementById('stat-no').innerText = guestsArr.filter(g => g.status === 'اعتذار').length;
     }
 
-    // زر عرض صفحة العميل
+    // وظيفة فتح نافذة التعديل
+    window.openEdit = (id, name, phone, status, cl) => {
+        editingGuestId = id;
+        document.getElementById('edit-name').value = name;
+        document.getElementById('edit-phone').value = phone;
+        document.getElementById('edit-status').value = status;
+        document.getElementById('edit-modal').classList.remove('hidden');
+        window.currentClient = cl;
+    };
+
+    // تأكيد التعديل وحفظه
+    document.getElementById('confirm-edit').onclick = async () => {
+        const ref = doc(db, "v30_guests", editingGuestId);
+        await updateDoc(ref, {
+            name: document.getElementById('edit-name').value,
+            phone: document.getElementById('edit-phone').value,
+            status: document.getElementById('edit-status').value
+        });
+        document.getElementById('edit-modal').classList.add('hidden');
+        loadData(window.currentClient);
+    };
+
     document.getElementById('view-client-page').onclick = () => {
         const sel = document.getElementById('client-select').value;
         if(sel) window.open(`${BASE_URL}?user=${sel}`, '_blank');
-        else alert("يرجى اختيار حفل من القائمة أولاً");
+        else alert("اختر حفلاً أولاً");
     };
 
-    // حفظ عميل جديد
     document.getElementById('save-client').onclick = async () => {
         await addDoc(collection(db, "v30_data"), { 
-            name: document.getElementById('c-name').value, 
-            password: document.getElementById('c-pass').value, 
-            event: document.getElementById('c-event').value, 
-            host: document.getElementById('c-host').value, 
-            img: document.getElementById('c-img').value, 
-            map: document.getElementById('c-map').value 
+            name: document.getElementById('c-name').value, password: document.getElementById('c-pass').value, 
+            event: document.getElementById('c-event').value, host: document.getElementById('c-host').value, 
+            img: document.getElementById('c-img').value, map: document.getElementById('c-map').value 
         });
-        alert("تم إنشاء الحساب بنجاح");
         location.reload();
     };
 
-    // إضافة ضيف
     document.getElementById('save-guest').onclick = async () => {
         const sel = document.getElementById('client-select').value;
         let p = document.getElementById('g-phone').value; 
@@ -208,7 +233,6 @@
         loadData(sel);
     };
 
-    // تسجيل الدخول
     document.getElementById('login-btn').onclick = async () => {
         const u = document.getElementById('user-input').value;
         const p = document.getElementById('pass-input').value;
@@ -218,7 +242,7 @@
             const q = query(collection(db, "v30_data"), where("name","==",u), where("password","==",p));
             const snap = await getDocs(q);
             if(!snap.empty) { sessionStorage.setItem('role','client'); sessionStorage.setItem('user',u); location.reload(); }
-            else alert("خطأ في بيانات الدخول");
+            else alert("خطأ في البيانات");
         }
     };
 
@@ -233,12 +257,10 @@
                 document.getElementById('admin-area').classList.remove('hidden');
                 const s = await getDocs(collection(db, "v30_data"));
                 const sel = document.getElementById('client-select');
-                sel.innerHTML = "<option value=''>اختر الحفل لعرض الضيوف</option>";
+                sel.innerHTML = "<option value=''>اختر الحفل...</option>";
                 s.forEach(d => sel.innerHTML += `<option value="${d.data().name}">${d.data().name}</option>`);
                 sel.onchange = () => loadData(sel.value);
-            } else {
-                loadData(user); // للعميل مباشرة
-            }
+            } else loadData(user);
         }
     }
     init();
