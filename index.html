@@ -18,17 +18,19 @@
 
         .container { width: 95%; max-width: 900px; margin: auto; padding: 20px; }
         
-        /* تحسين جذري للوجو ليكون واضحاً جداً وفخماً */
+        /* التنسيق المحسن للوجو لضمان الوضوح التام */
         .brand-header { text-align: center; margin-bottom: 40px; }
         .main-logo {
-            width: 200px; /* حجم أكبر للوضوح */
-            height: 200px; 
+            width: 180px; 
+            height: 180px; 
             border-radius: 50%;
-            border: 5px double var(--gold); /* إطار ذهبي ملكي مزدوج */
+            border: 5px double var(--gold); 
             background: #ffffff;
             box-shadow: 0 10px 30px rgba(0,0,0,0.2); 
-            padding: 10px;
-            object-fit: contain; /* يمنع تشويه الصورة */
+            padding: 8px;
+            object-fit: contain; 
+            display: block;
+            margin: 0 auto;
         }
 
         .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 25px; }
@@ -73,7 +75,7 @@
 <div class="container">
     <div id="login-section">
         <div class="card" style="max-width: 400px; margin: auto;">
-            <div class="brand-header"><img src="لوقو .jpeg" class="main-logo"></div>
+            <div class="brand-header"><img src="logo.jpg" class="main-logo" alt="لوجو رونق"></div>
             <h2 style="color:var(--gold)">نظام رونق للدعوات ⚜️</h2>
             <input id="user-input" placeholder="اسم المستخدم">
             <input id="pass-input" type="password" placeholder="كلمة المرور">
@@ -83,7 +85,7 @@
 
     <div id="dashboard-section" class="hidden">
         <div class="brand-header">
-            <img src="لوقو .jpeg" class="main-logo">
+            <img src="logo.jpg" class="main-logo" alt="لوجو رونق">
             <h3 id="welcome-msg" style="color: var(--black); margin-top: 10px;"></h3>
         </div>
 
@@ -188,7 +190,6 @@
         document.getElementById('stat-no').innerText = guestsArr.filter(g => g.status === 'اعتذار').length;
     }
 
-    // وظيفة فتح نافذة التعديل
     window.openEdit = (id, name, phone, status, cl) => {
         editingGuestId = id;
         document.getElementById('edit-name').value = name;
@@ -198,7 +199,6 @@
         window.currentClient = cl;
     };
 
-    // تأكيد التعديل وحفظه
     document.getElementById('confirm-edit').onclick = async () => {
         const ref = doc(db, "v30_guests", editingGuestId);
         await updateDoc(ref, {
