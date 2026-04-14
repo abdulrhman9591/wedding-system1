@@ -31,8 +31,6 @@
         .status-اعتذار { background: #ffebee; color: #c62828; }
         .status-انتظار { background: #fff8e1; color: #f9a825; }
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 9999; }
-        
-        /* تنسيق كود الدخول */
         .entry-code-box { background: #f9f9f9; border: 2px dashed var(--gold); padding: 15px; margin-top: 15px; border-radius: 10px; }
         .qr-placeholder { font-size: 20px; font-weight: bold; letter-spacing: 2px; color: var(--black); }
     </style>
@@ -46,12 +44,10 @@
             <h2 id="guest-welcome" style="color:var(--gold)"></h2>
             <img id="event-image" style="width:100%; border-radius:15px; border:2px solid var(--gold); margin-bottom:20px;">
             <p id="event-details" style="font-weight: bold;"></p>
-            
             <div id="guest-actions" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                 <button class="btn-gold" style="background:#27ae60" id="btn-confirm">تأكيد حضور</button>
                 <button class="btn-gold" style="background:#e74c3c" id="btn-decline">اعتذار</button>
             </div>
-
             <div id="after-confirm-area" class="hidden">
                 <div class="entry-code-box">
                     <p style="margin:0; color:var(--dark-gold);">كود الدخول الخاص بك (يستخدم مرة واحدة)</p>
@@ -60,10 +56,7 @@
                 </div>
                 <button class="btn-gold" style="margin-top:15px; background:#2c3e50" id="btn-map">📍 موقع المناسبة</button>
             </div>
-
-            <div id="decline-msg" class="hidden" style="color: #c62828; margin-top: 20px; font-weight: bold;">
-                نشكرك على إبلاغنا، تمنينا تواجدك معنا.
-            </div>
+            <div id="decline-msg" class="hidden" style="color: #c62828; margin-top: 20px; font-weight: bold;">نشكرك على إبلاغنا، تمنينا تواجدك معنا.</div>
         </div>
     </div>
 
@@ -94,7 +87,9 @@
                     <button class="btn-nav" onclick="window.open('orders.html', '_blank')">📥 طلبات العملاء</button>
                     <button class="btn-nav" id="view-client-page">📄 صفحة العميل</button>
                 </div>
+                <button id="btn-edit-client-data" class="btn-gold hidden" style="background:#34495e; margin-top:10px;">✏️ تعديل بيانات الحفل المختار</button>
             </div>
+
             <div class="card">
                 <h3>🎀 تأسيس حفل جديد</h3>
                 <input id="c-name" placeholder="اسم المستخدم">
@@ -105,6 +100,7 @@
                 <input id="c-map" placeholder="رابط الموقع">
                 <button class="btn-gold" id="save-client">إنشاء الحساب</button>
             </div>
+
             <div class="card">
                 <h3>📝 إضافة ضيوف</h3>
                 <select id="client-select"></select>
@@ -118,6 +114,20 @@
             <h3 id="table-title">قائمة الضيوف 📜</h3>
             <div id="data-table"></div>
             <button onclick="window.logout()" style="margin-top: 20px; background: #eee; color: #666;">خروج</button>
+        </div>
+    </div>
+
+    <div id="client-edit-modal" class="modal-overlay hidden">
+        <div class="card" style="width: 90%; max-width: 450px;">
+            <h3>تعديل بيانات الحفل ⚙️</h3>
+            <input id="edit-c-event" placeholder="اسم المناسبة">
+            <input id="edit-c-host" placeholder="اسم الداعي">
+            <input id="edit-c-img" placeholder="رابط صورة الدعوة">
+            <input id="edit-c-map" placeholder="رابط الموقع">
+            <input id="edit-c-pass" placeholder="كلمة مرور العميل">
+            <input type="hidden" id="edit-c-doc-id">
+            <button class="btn-gold" id="confirm-client-update">تحديث البيانات الآن</button>
+            <button onclick="document.getElementById('client-edit-modal').classList.add('hidden')" style="background:none; color:red; margin-top:10px;">إلغاء</button>
         </div>
     </div>
 
@@ -154,6 +164,7 @@
     const role = sessionStorage.getItem('role');
     const user = sessionStorage.getItem('user');
     let editingGuestId = "";
+    let currentClientDocId = "";
 
     // منطق الواتساب
     window.prepareWA = (phone, name, evName, guestId, host) => {
@@ -184,7 +195,22 @@
     async function loadData(cl) {
         if (!cl) return;
         const cSnap = await getDocs(query(collection(db, "v30_data"), where("name", "==", cl)));
-        let evName = ""; let host = ""; cSnap.forEach(cd => { evName = cd.data().event; host = cd.data().host; });
+        let evName = ""; let host = ""; 
+        cSnap.forEach(cd => { 
+            evName = cd.data().event; 
+            host = cd.data().host; 
+            currentClientDocId = cd.id; // تخزين ID العميل للتعديل
+            // ملء بيانات المودال للمستقبل
+            document.getElementById('edit-c-event').value = cd.data().event;
+            document.getElementById('edit-c-host').value = cd.data().host;
+            document.getElementById('edit-c-img').value = cd.data().img;
+            document.getElementById('edit-c-map').value = cd.data().map;
+            document.getElementById('edit-c-pass').value = cd.data().password;
+            document.getElementById('edit-c-doc-id').value = cd.id;
+        });
+
+        if(role === 'admin') document.getElementById('btn-edit-client-data').classList.remove('hidden');
+
         const snap = await getDocs(query(collection(db, "v30_guests"), where("belongsTo", "==", cl)));
         let h = `<table><tr><th>الاسم</th><th>الحالة</th><th>الإجراءات</th></tr>`;
         snap.forEach(d => {
@@ -202,48 +228,51 @@
         document.getElementById('stat-no').innerText = guestsArr.filter(g => g.status === 'اعتذار').length;
     }
 
-    // منطق الضيف والكود الموحد
+    // فتح مودال تعديل بيانات الحفل
+    document.getElementById('btn-edit-client-data').onclick = () => {
+        document.getElementById('client-edit-modal').classList.remove('hidden');
+    };
+
+    // تنفيذ تحديث بيانات الحفل
+    document.getElementById('confirm-client-update').onclick = async () => {
+        const docId = document.getElementById('edit-c-doc-id').value;
+        const ref = doc(db, "v30_data", docId);
+        await updateDoc(ref, {
+            event: document.getElementById('edit-c-event').value,
+            host: document.getElementById('edit-c-host').value,
+            img: document.getElementById('edit-c-img').value,
+            map: document.getElementById('edit-c-map').value,
+            password: document.getElementById('edit-c-pass').value
+        });
+        alert("تم تحديث بيانات الحفل بنجاح ✅");
+        document.getElementById('client-edit-modal').classList.add('hidden');
+        loadData(document.getElementById('client-select').value);
+    };
+
     async function handleGuestView(guestId) {
         const gDoc = await getDoc(doc(db, "v30_guests", guestId));
         if (gDoc.exists()) {
             const gData = gDoc.data();
             const cSnap = await getDocs(query(collection(db, "v30_data"), where("name", "==", gData.belongsTo)));
             let cData = {}; cSnap.forEach(d => cData = d.data());
-            
             document.getElementById('guest-section').classList.remove('hidden');
             document.getElementById('guest-welcome').innerText = `أهلاً بك يا ${gData.name}`;
             document.getElementById('event-image').src = cData.img;
             document.getElementById('event-details').innerText = `${cData.event} - الداعي: ${cData.host}`;
-
-            // إذا كان الضيف قد أكد حضوره مسبقاً
-            if (gData.status === "حضور") {
-                showEntryPass(guestId, cData.map);
-            } else if (gData.status === "اعتذار") {
-                document.getElementById('guest-actions').classList.add('hidden');
-                document.getElementById('decline-msg').classList.remove('hidden');
-            }
-
-            document.getElementById('btn-confirm').onclick = async () => {
-                await updateDoc(doc(db, "v30_guests", guestId), { status: "حضور" });
-                showEntryPass(guestId, cData.map);
-            };
-
-            document.getElementById('btn-decline').onclick = async () => {
-                await updateDoc(doc(db, "v30_guests", guestId), { status: "اعتذار" });
-                document.getElementById('guest-actions').classList.add('hidden');
-                document.getElementById('decline-msg').classList.remove('hidden');
-            };
+            if (gData.status === "حضور") showEntryPass(guestId, cData.map);
+            else if (gData.status === "اعتذار") { document.getElementById('guest-actions').classList.add('hidden'); document.getElementById('decline-msg').classList.remove('hidden'); }
+            document.getElementById('btn-confirm').onclick = async () => { await updateDoc(doc(db, "v30_guests", guestId), { status: "حضور" }); showEntryPass(guestId, cData.map); };
+            document.getElementById('btn-decline').onclick = async () => { await updateDoc(doc(db, "v30_guests", guestId), { status: "اعتذار" }); document.getElementById('guest-actions').classList.add('hidden'); document.getElementById('decline-msg').classList.remove('hidden'); };
         }
     }
 
     function showEntryPass(id, mapUrl) {
         document.getElementById('guest-actions').classList.add('hidden');
         document.getElementById('after-confirm-area').classList.remove('hidden');
-        document.getElementById('entry-code-display').innerText = id.substring(0, 8).toUpperCase(); // كود مختصر من الـ ID
+        document.getElementById('entry-code-display').innerText = id.substring(0, 8).toUpperCase();
         document.getElementById('btn-map').onclick = () => window.open(mapUrl, '_blank');
     }
 
-    // بقية وظائف الحفظ والدخول
     document.getElementById('confirm-edit').onclick = async () => {
         await updateDoc(doc(db, "v30_guests", editingGuestId), { name: document.getElementById('edit-name').value, phone: document.getElementById('edit-phone').value, status: document.getElementById('edit-status').value });
         document.getElementById('edit-modal').classList.add('hidden'); loadData(window.currentClient);
