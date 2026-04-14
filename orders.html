@@ -1,35 +1,110 @@
-<script>
-    // 1. محاولة تحميل البيانات المحفوظة سابقاً، إذا لم توجد نستخدم القيم الأصلية
-    let defaultServices = [
-        { id: 0, title: 'تصميم دعوة ثابتة', cost: '50' },
-        { id: 1, title: 'تصميم دعوة فيديو', cost: '100' },
-        { id: 2, title: 'نظام باركود الدخول', cost: '150' },
-        { id: 3, title: 'الباقة الملكية الشاملة', cost: '250' }
-    ];
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>رونق للمناسبات | طلب خدمة</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --pink: #fdf2f2; --gold: #c5a059; --black: #1a1a1a; --dark-gold: #b38b7d; }
+        body { font-family: 'Cairo', sans-serif; background-color: var(--pink); background-image: url('https://www.transparenttextures.com/patterns/islamic-art.png'); margin: 0; padding: 0; direction: rtl; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+        .order-card { background: white; border-radius: 30px; padding: 50px 30px; width: 90%; max-width: 550px; box-shadow: 0 20px 40px rgba(0,0,0,0.1); border-top: 8px solid var(--gold); text-align: center; position: relative; margin-top: 60px; }
+        .logo-container { width: 150px; height: 150px; margin: -130px auto 20px; background: white; border-radius: 50%; padding: 5px; border: 4px solid var(--gold); overflow: hidden; display: flex; align-items: center; justify-content: center; }
+        .logo-container img { width: 100%; object-fit: contain; }
+        h2 { color: var(--gold); margin-bottom: 5px; }
+        .input-group { margin-bottom: 15px; text-align: right; }
+        label { display: block; margin-bottom: 5px; color: var(--gold); font-weight: bold; font-size: 14px; }
+        input { width: 100%; padding: 12px; border-radius: 12px; border: 1px solid #eee; font-family: 'Cairo'; box-sizing: border-box; text-align: center; }
+        .package-options { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 20px 0; }
+        .pkg-box { border: 2px solid #f0f0f0; padding: 15px; border-radius: 15px; cursor: pointer; transition: 0.3s; }
+        .pkg-box.active { border-color: var(--gold); background: #fff9f0; color: var(--gold); }
+        .btn-order { background: linear-gradient(135deg, var(--gold), var(--dark-gold)); color: white; padding: 15px; border-radius: 12px; border: none; width: 100%; font-weight: bold; cursor: pointer; font-size: 18px; margin-top: 10px; }
+        .admin-trigger { position: absolute; bottom: 10px; left: 10px; font-size: 10px; color: #ccc; cursor: pointer; }
+        .admin-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center; z-index: 2000; }
+        .admin-modal { background: white; border-radius: 20px; width: 90%; max-width: 400px; padding: 25px; }
+        .edit-item { background: #f9f9f9; padding: 10px; border-radius: 10px; margin-bottom: 10px; text-align: right; }
+    </style>
+</head>
+<body>
 
-    let storeServices = JSON.parse(localStorage.getItem('rawnaq_services')) || defaultServices;
+<div class="order-card">
+    <div class="logo-container"><img src="logo.jpg"></div>
+    <h2>رَوْنَق للمناسبات ⚜️</h2>
+    <p style="color:#777">تميز بدعوتك معنا</p>
 
+    <div class="input-group">
+        <label>الاسم الكريم</label>
+        <input id="cust-name" placeholder="أدخل اسمك">
+    </div>
+    <div class="input-group">
+        <label>رقم الجوال</label>
+        <input id="cust-phone" placeholder="966...">
+    </div>
+    
+    <div id="pkg-list" class="package-options">
+        </div>
+
+    <button class="btn-order" onclick="sendOrder()">إرسال الطلب واتساب 🚀</button>
+    <div class="admin-trigger" onclick="openAdminPortal()">🔒 الإدارة</div>
+</div>
+
+<div id="adminOverlay" class="admin-overlay">
+    <div class="admin-modal">
+        <h3>تعديل الخدمات ⚙️</h3>
+        <div id="admin-edit-area"></div>
+        <button class="btn-order" onclick="applyAdminChanges()">حفظ التعديلات</button>
+        <button onclick="closeAdminPortal()" style="background:none; border:none; color:red; margin-top:10px; cursor:pointer;">إغلاق</button>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const firebaseConfig = { apiKey: "AIzaSyBycODn3kTe7uRIBYifDogSPmv2towU6lA", projectId: "wedding-system-6fadd", appId: "1:902051092170:web:e228d3138a5b091b974633" };
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    let storeServices = [];
     let currentSelection = "";
+
+    // جلب الخدمات من Firebase عند فتح الصفحة
+    async function loadServices() {
+        const docRef = doc(db, "settings", "services");
+        const docSnap = await getDoc(docRef);
+        
+        if (docSnap.exists()) {
+            storeServices = docSnap.data().list;
+        } else {
+            // قيم افتراضية إذا كانت قاعدة البيانات فارغة أول مرة
+            storeServices = [
+                { title: 'تصميم دعوة ثابتة', cost: '50' },
+                { title: 'تصميم دعوة فيديو', cost: '100' },
+                { title: 'نظام باركود الدخول', cost: '150' },
+                { title: 'الباقة الملكية الشاملة', cost: '250' }
+            ];
+            await setDoc(doc(db, "settings", "services"), { list: storeServices });
+        }
+        drawServices();
+    }
 
     function drawServices() {
         const list = document.getElementById('pkg-list');
         list.innerHTML = "";
-        storeServices.forEach(srv => {
-            list.innerHTML += `
-                <div class="pkg-box" onclick="handleSelect(this, '${srv.title}', '${srv.cost}')">
-                    <span class="pkg-name">${srv.title}</span>
-                    <span class="pkg-price">${srv.cost} ر.س</span>
-                </div>`;
+        storeServices.forEach((srv, idx) => {
+            const box = document.createElement('div');
+            box.className = 'pkg-box';
+            box.innerHTML = `<b>${srv.title}</b><br><small>${srv.cost} ر.س</small>`;
+            box.onclick = () => {
+                document.querySelectorAll('.pkg-box').forEach(b => b.classList.remove('active'));
+                box.classList.add('active');
+                currentSelection = `${srv.title} (${srv.cost} ريال)`;
+            };
+            list.appendChild(box);
         });
     }
 
-    function handleSelect(element, name, price) {
-        document.querySelectorAll('.pkg-box').forEach(b => b.classList.remove('active'));
-        element.classList.add('active');
-        currentSelection = `${name} (${price} ريال)`;
-    }
-
-    function openAdminPortal() {
+    window.openAdminPortal = () => {
         const pin = prompt("كلمة مرور الإدارة:");
         if (pin === "112211") {
             document.getElementById('adminOverlay').style.display = 'flex';
@@ -38,43 +113,34 @@
             storeServices.forEach((srv, idx) => {
                 area.innerHTML += `
                     <div class="edit-item">
-                        <label>الخدمة ${idx + 1}</label>
-                        <input id="inp-n-${idx}" value="${srv.title}" placeholder="اسم الخدمة">
-                        <input id="inp-p-${idx}" value="${srv.cost}" placeholder="السعر">
+                        <input id="inp-n-${idx}" value="${srv.title}">
+                        <input id="inp-p-${idx}" value="${srv.cost}" style="width:30%">
                     </div>`;
             });
-        } else if(pin !== null) { alert("عذراً، كلمة المرور غير صحيحة"); }
-    }
+        }
+    };
 
-    function applyAdminChanges() {
-        storeServices.forEach((srv, idx) => {
-            srv.title = document.getElementById(`inp-n-${idx}`).value;
-            srv.cost = document.getElementById(`inp-p-${idx}`).value;
-        });
+    window.applyAdminChanges = async () => {
+        const newList = storeServices.map((srv, idx) => ({
+            title: document.getElementById(`inp-n-${idx}`).value,
+            cost: document.getElementById(`inp-p-${idx}`).value
+        }));
+        await setDoc(doc(db, "settings", "services"), { list: newList });
+        alert("تم الحفظ في قاعدة البيانات بنجاح ✅");
+        location.reload();
+    };
 
-        // 2. حفظ التعديلات الجديدة في ذاكرة المتصفح قبل إعادة الرسم
-        localStorage.setItem('rawnaq_services', JSON.stringify(storeServices));
+    window.closeAdminPortal = () => document.getElementById('adminOverlay').style.display = 'none';
 
-        drawServices();
-        closeAdminPortal();
-        alert("تم حفظ التعديلات بنجاح ولن تضيع عند التحديث ✨");
-    }
-
-    function closeAdminPortal() { document.getElementById('adminOverlay').style.display = 'none'; }
-
-    function sendOrder() {
+    window.sendOrder = () => {
         const name = document.getElementById('cust-name').value;
         const phone = document.getElementById('cust-phone').value;
-        const myWhatsApp = "966532956835";
+        if(!name || !currentSelection) return alert("اكمل البيانات");
+        const msg = `⚜️ *طلب خدمة رَوْنَق* ⚜️%0A%0A*الاسم:* ${name}%0A*الجوال:* ${phone}%0A*الخدمة:* ${currentSelection}`;
+        window.location.href = `https://wa.me/966532956835?text=${msg}`;
+    };
 
-        if(!name || !currentSelection) {
-            alert("يرجى كتابة الاسم واختيار خدمة");
-            return;
-        }
-
-        const msg = `⚜️ *طلب خدمة من رَوْنَق* ⚜️%0A%0A*الاسم:* ${name}%0A*الجوال:* ${phone}%0A*الخدمة:* ${currentSelection}`;
-        window.location.href = `https://wa.me/${myWhatsApp}?text=${msg}`;
-    }
-
-    drawServices();
+    loadServices();
 </script>
+</body>
+</html>
