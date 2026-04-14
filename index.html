@@ -18,12 +18,17 @@
 
         .container { width: 95%; max-width: 900px; margin: auto; padding: 20px; }
         
-        /* تنسيق اللوجو في الإحصائيات */
-        .brand-header { text-align: center; margin-bottom: 20px; }
+        /* تكبير وتحسين اللوجو */
+        .brand-header { text-align: center; margin-bottom: 30px; }
         .main-logo {
-            width: 120px; height: 120px; border-radius: 50%;
-            border: 3px solid var(--gold); background: white;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1); padding: 5px;
+            width: 160px; /* تكبير اللوجو */
+            height: 160px; 
+            border-radius: 50%;
+            border: 4px solid var(--gold); 
+            background: white;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15); 
+            padding: 10px;
+            object-fit: contain; /* لضمان عدم قص الصورة */
         }
 
         .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 25px; }
@@ -31,39 +36,35 @@
             background: linear-gradient(145deg, var(--black), #333); 
             color: var(--gold); padding: 20px; border-radius: 15px; 
             text-align: center; border: 1px solid var(--gold);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
         }
-        .stat-card h4 { margin: 0; font-size: 14px; opacity: 0.8; }
         .stat-card p { margin: 5px 0 0; font-size: 24px; font-weight: bold; }
 
-        /* أزرار الإدارة الجديدة */
         .admin-quick-actions { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 20px; }
-        .btn-nav { background: #2c3e50; color: white; padding: 10px; border-radius: 10px; font-size: 12px; text-decoration: none; display: flex; align-items: center; justify-content: center; border: 1px solid var(--gold); }
-        .btn-nav:hover { background: var(--black); }
+        .btn-nav { background: #2c3e50; color: white; padding: 10px; border-radius: 10px; font-size: 12px; text-decoration: none; border: 1px solid var(--gold); cursor: pointer; }
 
         .card { 
             background: white; border-radius: 20px; padding: 25px; margin-bottom: 20px; 
             box-shadow: 0 5px 15px rgba(0,0,0,0.05); text-align: center;
-            border-top: 5px solid var(--gold); position: relative;
+            border-top: 5px solid var(--gold);
         }
 
         .hidden { display: none !important; }
         input, select { width: 100%; padding: 12px; margin: 8px 0; border-radius: 10px; border: 1px solid #ddd; font-family: 'Cairo'; box-sizing: border-box; }
         button { cursor: pointer; padding: 12px; border-radius: 10px; border: none; font-weight: bold; transition: 0.3s; font-family: 'Cairo'; width: 100%; }
         
-        .btn-gold { background: var(--gold); color: white; box-shadow: 0 4px 10px rgba(197, 160, 89, 0.3); }
+        .btn-gold { background: var(--gold); color: white; }
         .btn-gold:hover { background: var(--dark-gold); }
 
         table { width: 100%; border-collapse: collapse; margin-top: 15px; background: white; border-radius: 15px; overflow: hidden; }
         th { background: var(--black); color: var(--gold); padding: 15px; font-size: 14px; }
-        td { padding: 12px; border-bottom: 1px solid #eee; text-align: center; font-size: 13px; color: #444; }
+        td { padding: 12px; border-bottom: 1px solid #eee; text-align: center; font-size: 13px; }
         
         .status-pill { padding: 5px 12px; border-radius: 20px; font-size: 11px; font-weight: bold; }
         .status-حضور { background: #e8f5e9; color: #2e7d32; }
         .status-اعتذار { background: #ffebee; color: #c62828; }
         .status-انتظار { background: #fff8e1; color: #f9a825; }
 
-        .btn-wa { background: #25D366; color: white; padding: 8px 12px; border-radius: 8px; font-size: 11px; border: none; }
+        .btn-wa { background: #25D366; color: white; padding: 8px 12px; border-radius: 8px; font-size: 11px; border: none; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -102,9 +103,10 @@
                 <input id="set-admin-phone" placeholder="رقم واتساب الإدارة (966...)">
                 <button class="btn-gold" id="save-settings" style="margin-top:10px">حفظ رقم الواتساب</button>
             </div>
+            
             <div class="card">
                 <h3>🎀 تأسيس حفل جديد</h3>
-                <input id="c-name" placeholder="اسم المستخدم">
+                <input id="c-name" placeholder="اسم المستخدم الجديد">
                 <input id="c-pass" placeholder="كلمة المرور">
                 <input id="c-event" placeholder="اسم المناسبة">
                 <input id="c-host" placeholder="اسم الداعي">
@@ -112,6 +114,7 @@
                 <input id="c-map" placeholder="رابط الموقع">
                 <button class="btn-gold" id="save-client">إنشاء الحساب</button>
             </div>
+
             <div class="card">
                 <h3>📝 إضافة ضيوف</h3>
                 <select id="client-select"></select>
@@ -122,7 +125,7 @@
         </div>
 
         <div class="card" style="overflow-x:auto;">
-            <h3 style="color:var(--black)">قائمة بأسماء الضيوف 📜</h3>
+            <h3 id="table-title">قائمة الضيوف 📜</h3>
             <div id="data-table"></div>
             <button onclick="window.logout()" style="margin-top: 20px; background: #eee; color: #666;">تسجيل الخروج</button>
         </div>
@@ -136,22 +139,75 @@
     const firebaseConfig = { apiKey: "AIzaSyBycODn3kTe7uRIBYifDogSPmv2towU6lA", projectId: "wedding-system-6fadd", appId: "1:902051092170:web:e228d3138a5b091b974633" };
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-    // تحديث الرابط ليتوافق مع اليوزر نيم الجديد
     const BASE_URL = "https://ronaq-inv.github.io/wedding-system1/"; 
 
     const role = sessionStorage.getItem('role');
     const user = sessionStorage.getItem('user');
 
-    // زر عرض صفحة العميل بناءً على السلكت
+    async function loadData(cl) {
+        if (!cl) return;
+        
+        // جلب بيانات المناسبة
+        const cSnap = await getDocs(query(collection(db, "v30_data"), where("name", "==", cl)));
+        let evName = ""; let host = ""; 
+        cSnap.forEach(cd => { evName = cd.data().event; host = cd.data().host; });
+
+        // جلب الضيوف
+        const snap = await getDocs(query(collection(db, "v30_guests"), where("belongsTo", "==", cl)));
+        let guestsArr = [];
+        
+        // بناء الجدول: إذا كان آدمن يظهر عمود الإجراءات، إذا كان عميل يختفي
+        let h = `<table><tr><th>الاسم</th><th>الحالة</th>`;
+        if (role === 'admin') h += `<th>الإجراءات</th>`;
+        h += `</tr>`;
+        
+        snap.forEach(d => {
+            const g = d.data(); guestsArr.push(g);
+            const msg = `أهلاً بك يا ${g.name} ✨\nنتشرف بدعوتكم لحضور ${evName}..\nلالتأكيد عبر الرابط:\n${BASE_URL}?id=${d.id}\nالداعي: ${host}`;
+            
+            h += `<tr><td>${g.name}</td><td><span class="status-pill status-${g.status}">${g.status}</span></td>`;
+            if (role === 'admin') {
+                h += `<td><button onclick="window.sendToWA('${g.phone}', \`${msg}\`)" class="btn-wa">إرسال</button></td>`;
+            }
+            h += `</tr>`;
+        });
+        
+        document.getElementById('data-table').innerHTML = h + "</table>";
+        document.getElementById('stat-total').innerText = guestsArr.length;
+        document.getElementById('stat-yes').innerText = guestsArr.filter(g => g.status === 'حضور').length;
+        document.getElementById('stat-no').innerText = guestsArr.filter(g => g.status === 'اعتذار').length;
+    }
+
+    // زر عرض صفحة العميل
     document.getElementById('view-client-page').onclick = () => {
         const sel = document.getElementById('client-select').value;
         if(sel) window.open(`${BASE_URL}?user=${sel}`, '_blank');
-        else alert("يرجى اختيار حفل أولاً");
+        else alert("يرجى اختيار حفل من القائمة أولاً");
     };
 
-    // [دوال الـ Firebase والـ Logic المعتمد لم تتغير لضمان استقرار النظام]
-    // ... (تكملة السكريبت المعتمد) ...
-    
+    // حفظ عميل جديد
+    document.getElementById('save-client').onclick = async () => {
+        await addDoc(collection(db, "v30_data"), { 
+            name: document.getElementById('c-name').value, 
+            password: document.getElementById('c-pass').value, 
+            event: document.getElementById('c-event').value, 
+            host: document.getElementById('c-host').value, 
+            img: document.getElementById('c-img').value, 
+            map: document.getElementById('c-map').value 
+        });
+        alert("تم إنشاء الحساب بنجاح");
+        location.reload();
+    };
+
+    // إضافة ضيف
+    document.getElementById('save-guest').onclick = async () => {
+        const sel = document.getElementById('client-select').value;
+        let p = document.getElementById('g-phone').value; 
+        if(p.startsWith('0')) p = '966' + p.substring(1);
+        await addDoc(collection(db, "v30_guests"), { belongsTo: sel, name: document.getElementById('g-name').value, phone: p, status: "انتظار" });
+        loadData(sel);
+    };
+
     // تسجيل الدخول
     document.getElementById('login-btn').onclick = async () => {
         const u = document.getElementById('user-input').value;
@@ -168,26 +224,6 @@
 
     window.logout = () => { sessionStorage.clear(); location.reload(); };
 
-    async function loadData(cl) {
-        const cSnap = await getDocs(query(collection(db, "v30_data"), where("name", "==", cl)));
-        let evName = ""; let host = ""; cSnap.forEach(cd => { evName = cd.data().event; host = cd.data().host; });
-
-        const snap = await getDocs(query(collection(db, "v30_guests"), where("belongsTo", "==", cl)));
-        let guestsArr = [];
-        let h = `<table><tr><th>الاسم</th><th>الحالة</th><th>الإجراءات</th></tr>`;
-        
-        snap.forEach(d => {
-            const g = d.data(); guestsArr.push(g);
-            const msg = `أهلاً بك يا ${g.name} ✨\nنتشرف بدعوتكم لحضور ${evName}..\nللتأكيد عبر الرابط:\n${BASE_URL}?id=${d.id}\nالداعي: ${host}`;
-            h += `<tr><td>${g.name}</td><td><span class="status-pill status-${g.status}">${g.status}</span></td>`;
-            h += `<td><button onclick="window.sendToWA('${g.phone}', \`${msg}\`)" class="btn-wa">إرسال</button></td></tr>`;
-        });
-        document.getElementById('data-table').innerHTML = h + "</table>";
-        document.getElementById('stat-total').innerText = guestsArr.length;
-        document.getElementById('stat-yes').innerText = guestsArr.filter(g => g.status === 'حضور').length;
-        document.getElementById('stat-no').innerText = guestsArr.filter(g => g.status === 'اعتذار').length;
-    }
-
     async function init() {
         if(sessionStorage.getItem('role')) {
             document.getElementById('login-section').classList.add('hidden');
@@ -197,10 +233,12 @@
                 document.getElementById('admin-area').classList.remove('hidden');
                 const s = await getDocs(collection(db, "v30_data"));
                 const sel = document.getElementById('client-select');
-                sel.innerHTML = "<option value=''>اختر الحفل...</option>";
+                sel.innerHTML = "<option value=''>اختر الحفل لعرض الضيوف</option>";
                 s.forEach(d => sel.innerHTML += `<option value="${d.data().name}">${d.data().name}</option>`);
                 sel.onchange = () => loadData(sel.value);
-            } else loadData(user);
+            } else {
+                loadData(user); // للعميل مباشرة
+            }
         }
     }
     init();
