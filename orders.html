@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>رونق للمناسبات | طلب خدمة</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --pink: #fdf2f2; --gold: #c5a059; --black: #1a1a1a; --dark-gold: #b38b7d; }
+        
+        body { 
+            font-family: 'Cairo', sans-serif; 
+            background-color: var(--pink); 
+            background-image: url('https://www.transparenttextures.com/patterns/islamic-art.png');
+            margin: 0; padding: 0; direction: rtl; 
+            display: flex; align-items: center; justify-content: center; min-height: 100vh;
+        }
+
+        .order-card { 
+            background: white; border-radius: 25px; padding: 40px 30px; width: 90%; max-width: 500px; 
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1); border-top: 6px solid var(--gold); text-align: center;
+            position: relative; margin-top: 50px;
+        }
+
+        .logo-container {
+            width: 140px; height: 140px; margin: -110px auto 20px;
+            background: white; border-radius: 50%; padding: 5px;
+            border: 3px solid var(--gold); box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .logo-container img { width: 100%; height: 100%; object-fit: contain; }
+
+        h2 { color: var(--gold); margin-bottom: 5px; font-weight: 700; }
+        p.subtitle { color: #666; font-size: 14px; margin-bottom: 25px; }
+
+        input { 
+            width: 100%; padding: 14px; margin: 10px 0; border-radius: 12px; 
+            border: 1px solid #ddd; font-family: 'Cairo'; box-sizing: border-box; text-align: center;
+        }
+
+        .package-options { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 20px 0; }
+        .pkg-box { 
+            border: 2px solid #eee; padding: 15px; border-radius: 15px; cursor: pointer;
+            transition: 0.3s ease; font-size: 13px; font-weight: bold; color: #555;
+            display: flex; flex-direction: column; justify-content: center;
+        }
+        .pkg-box.active { border-color: var(--gold); background: #fff9f0; color: var(--gold); }
+
+        button { 
+            background: linear-gradient(135deg, var(--gold), var(--dark-gold)); 
+            color: white; padding: 16px; border-radius: 12px; border: none; width: 100%; 
+            font-weight: bold; cursor: pointer; font-size: 18px; margin-top: 15px;
+        }
+
+        /* زر دخول الأدمن السري */
+        .admin-lock {
+            position: absolute; bottom: 10px; right: 10px; font-size: 14px;
+            color: #ddd; cursor: pointer; opacity: 0.5; transition: 0.3s;
+        }
+        .admin-lock:hover { opacity: 1; color: var(--gold); }
+
+        /* نافذة تعديل الأدمن */
+        .admin-panel {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center; z-index: 1000;
+        }
+        .panel-content { background: white; padding: 25px; border-radius: 20px; width: 90%; max-width: 400px; text-align: right; }
+    </style>
+</head>
+<body>
+
+<audio id="bgMusic" loop>
+    <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
+</audio>
+
+<div class="order-card">
+    <div class="logo-container">
+        <img src="لوقو .jpeg" alt="رونق">
+    </div>
+
+    <h2>رَوْنَق للمناسبات ⚜️</h2>
+    <p class="subtitle">تميز بدعوتك.. واجعل حفلكم ذكرى لا تُنسى</p>
+
+    <input id="cust-name" placeholder="الاسم الكريم">
+    <input id="cust-phone" placeholder="رقم الجوال (966)">
+    
+    <div style="text-align: right; margin: 15px 5px 5px; font-size: 14px; color: var(--gold); font-weight: bold;">اختر نوع الخدمة:</div>
+    <div class="package-options" id="pkg-container">
+        </div>
+
+    <button onclick="sendOrder()">تأكيد الطلب عبر واتساب 🚀</button>
+    
+    <div class="admin-lock" onclick="openAdmin()">🔒 دخول الإدارة</div>
+</div>
+
+<div id="adminPanel" class="admin-panel">
+    <div class="panel-content">
+        <h3 style="color:var(--gold)">تعديل الباقات</h3>
+        <div id="edit-fields"></div>
+        <button onclick="saveChanges()" class="btn-gold">حفظ التغييرات</button>
+        <button onclick="closeAdmin()" style="background:none; color:#888; width:100%; margin-top:10px;">إلغاء</button>
+    </div>
+</div>
+
+<script>
+    // بيانات الباقات الافتراضية
+    let packages = [
+        { id: 0, name: 'دعوة ثابتة', price: '50' },
+        { id: 1, name: 'دعوة فيديو', price: '100' },
+        { id: 2, name: 'نظام الباركود', price: '150' },
+        { id: 3, name: 'الباقة الملكية', price: '250' }
+    ];
+
+    let selectedPackage = "";
+    const bgMusic = document.getElementById('bgMusic');
+
+    function renderPackages() {
+        const container = document.getElementById('pkg-container');
+        container.innerHTML = "";
+        packages.forEach(pkg => {
+            container.innerHTML += `
+                <div class="pkg-box" onclick="selectPkg(this, '${pkg.name}', '${pkg.price}')">
+                    <span>${pkg.name}</span>
+                    <span style="font-size:16px; color:var(--black); margin-top:5px;">${pkg.price} ر.س</span>
+                </div>`;
+        });
+    }
+
+    function selectPkg(el, name, price) {
+        document.querySelectorAll('.pkg-box').forEach(b => b.classList.remove('active'));
+        el.classList.add('active');
+        selectedPackage = `${name} بقيمة ${price} ريال`;
+    }
+
+    // وظائف الأدمن
+    function openAdmin() {
+        const pass = prompt("أدخل كلمة مرور الإدارة:");
+        if (pass === "123456") { // كلمة المرور الخاصة بك
+            document.getElementById('adminPanel').style.display = 'flex';
+            const fields = document.getElementById('edit-fields');
+            fields.innerHTML = "";
+            packages.forEach((pkg, index) => {
+                fields.innerHTML += `
+                    <div style="margin-bottom:10px; border-bottom:1px solid #eee; padding-bottom:5px;">
+                        <input id="edit-n-${index}" value="${pkg.name}" placeholder="الاسم">
+                        <input id="edit-p-${index}" value="${pkg.price}" placeholder="السعر">
+                    </div>`;
+            });
+        } else { alert("كلمة المرور خاطئة"); }
+    }
+
+    function saveChanges() {
+        packages.forEach((pkg, index) => {
+            pkg.name = document.getElementById(`edit-n-${index}`).value;
+            pkg.price = document.getElementById(`edit-p-${index}`).value;
+        });
+        renderPackages();
+        closeAdmin();
+        alert("تم تحديث الباقات بنجاح");
+    }
+
+    function closeAdmin() { document.getElementById('adminPanel').style.display = 'none'; }
+
+    function sendOrder() {
+        const name = document.getElementById('cust-name').value;
+        const phone = document.getElementById('cust-phone').value;
+        if(!name || !selectedPackage) return alert("يرجى إكمال البيانات واختيار باقة");
+        window.location.href = `https://wa.me/966547805012?text=⚜️ *طلب جديد من رونق* %0Aالاسم: ${name}%0Aالجوال: ${phone}%0Aالخدمة: ${selectedPackage}`;
+    }
+
+    document.body.addEventListener('click', () => { bgMusic.play(); }, { once: true });
+    renderPackages();
+</script>
+</body>
+</html>
