@@ -36,7 +36,7 @@
         
         /* تنسيق منطقة الـ QR لضمان التوسط والوضوح */
         #qrcode-container { display: flex; justify-content: center; margin: 15px auto; }
-        #qrcode-container img { border: 5px solid white; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        #qrcode-container img { border: 5px solid white; box-shadow: 0 0 10px rgba(0,0,0,0.1); padding: 5px; background: #fff; }
     </style>
 </head>
 <body>
@@ -245,11 +245,11 @@
         document.getElementById('guest-actions').classList.add('hidden');
         document.getElementById('after-confirm-area').classList.remove('hidden');
         
-        // تنظيف الحاوية وتوليد QR جديد باستخدام معرف الضيف
+        // تنظيف الحاوية وتوليد QR جديد باستخدام معرف الضيف الفريد
         const qrContainer = document.getElementById("qrcode-container");
         qrContainer.innerHTML = "";
         new QRCode(qrContainer, {
-            text: id, // المعرف الفريد للضيف
+            text: id, 
             width: 180,
             height: 180,
             colorDark : "#1a1a1a",
